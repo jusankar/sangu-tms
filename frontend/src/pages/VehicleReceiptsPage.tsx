@@ -12,6 +12,7 @@ type ReceiptLine = {
   weightKg: string
 }
 type FormState = {
+  challanNo: string
   branchId: string
   challanDate: string
   fromLocationRef: string
@@ -70,6 +71,10 @@ export function VehicleReceiptsPage() {
       setDrivers(driverRows)
       setVehicles(vehicleRows)
       setConsignments(consignmentRows)
+      setForm((prev) => ({
+        ...prev,
+        challanNo: prev.challanNo || nextDocumentNo("CH/GEN", receiptRows.map((x) => x.challanNo)),
+      }))
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load lorry receipts")
     } finally {
@@ -87,12 +92,13 @@ export function VehicleReceiptsPage() {
     const fromLocationId = findLocationIdByRef(form.fromLocationRef, locations)
     const toLocationId = findLocationIdByRef(form.toLocationRef, locations)
     const linePayload = linesToPayload(lines, consignments)
-    const errors = validateForm(form, linePayload, fromLocationId, toLocationId)
+    const errors = validateForm(form, linePayload, fromLocationId, toLocationId, rows)
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
     try {
       await api.createVehicleReceipt({
+        challanNo: form.challanNo.trim() || undefined,
         branchId: form.branchId,
         challanDate: form.challanDate,
         fromLocationId,
@@ -147,6 +153,7 @@ export function VehicleReceiptsPage() {
   function onReset() {
     setForm((prev) => ({
       ...emptyForm(),
+      challanNo: nextDocumentNo("CH/GEN", rows.map((x) => x.challanNo)),
       branchId: prev.branchId,
       fromLocationRef: prev.fromLocationRef,
       toLocationRef: prev.toLocationRef,
@@ -198,6 +205,13 @@ export function VehicleReceiptsPage() {
             <fieldset className="consignment-wide">
               <legend>Header Details</legend>
               <div className="consignment-fields">
+                <label>
+                  <span className="label-text">
+                    Lorry Receipt No<sup className="required">*</sup>
+                  </span>
+                  <input value={form.challanNo} onChange={(e) => setForm((prev) => ({ ...prev, challanNo: e.target.value }))} />
+                  {fieldErrors.challanNo ? <small className="error-text">{fieldErrors.challanNo}</small> : null}
+                </label>
                 <label>
                   <span className="label-text">
                     Branch<sup className="required">*</sup>
@@ -301,10 +315,10 @@ export function VehicleReceiptsPage() {
                       <input className="lr-col-wide" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
                     </td>
                     <td>
-                      <input className="lr-col-compact" value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
+                      <input className="lr-col-compact numeric-input" value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
                     </td>
                     <td>
-                      <input className="lr-col-compact" value={line.weightKg} onChange={(e) => updateLine(idx, { weightKg: e.target.value })} />
+                      <input className="lr-col-compact numeric-input" value={line.weightKg} onChange={(e) => updateLine(idx, { weightKg: e.target.value })} />
                     </td>
                     <td>
                       <button className="btn-danger" onClick={() => removeLine(idx)} type="button">
@@ -339,16 +353,26 @@ export function VehicleReceiptsPage() {
                 <span className="label-text">
                   Lorry Hire<sup className="required">*</sup>
                 </span>
-                <input value={form.totalHire} onChange={(e) => setForm((prev) => ({ ...prev, totalHire: e.target.value }))} />
+                <input
+                  className="numeric-input"
+                  value={form.totalHire}
+                  onChange={(e) => setForm((prev) => ({ ...prev, totalHire: e.target.value }))}
+                  onBlur={() => setForm((prev) => ({ ...prev, totalHire: toAmount(prev.totalHire).toFixed(2) }))}
+                />
                 {fieldErrors.totalHire ? <small className="error-text">{fieldErrors.totalHire}</small> : null}
               </label>
               <label>
                 Advance
-                <input value={form.advanceAmount} onChange={(e) => setForm((prev) => ({ ...prev, advanceAmount: e.target.value }))} />
+                <input
+                  className="numeric-input"
+                  value={form.advanceAmount}
+                  onChange={(e) => setForm((prev) => ({ ...prev, advanceAmount: e.target.value }))}
+                  onBlur={() => setForm((prev) => ({ ...prev, advanceAmount: toAmount(prev.advanceAmount).toFixed(2) }))}
+                />
               </label>
               <label>
                 Balance
-                <input value={balanceAmount.toFixed(2)} readOnly />
+                <input className="numeric-input" value={balanceAmount.toFixed(2)} readOnly />
               </label>
               <label>
                 Balance At (Location)
@@ -413,8 +437,8 @@ export function VehicleReceiptsPage() {
                   <td>
                     {findLocationNameById(row.fromLocationId, locations)} - {findLocationNameById(row.toLocationId, locations)}
                   </td>
-                  <td>Rs. {row.freightAmount.toFixed(2)}</td>
-                  <td>Rs. {row.totalHire.toFixed(2)}</td>
+                  <td className="numeric-cell">Rs. {row.freightAmount.toFixed(2)}</td>
+                  <td className="numeric-cell">Rs. {row.totalHire.toFixed(2)}</td>
                   <td>{row.consignments.length}</td>
                   <td>{row.status}</td>
                 </tr>
@@ -440,6 +464,7 @@ export function VehicleReceiptsPage() {
 function emptyForm(): FormState {
   const today = new Date().toISOString().slice(0, 10)
   return {
+    challanNo: "",
     branchId: "",
     challanDate: today,
     fromLocationRef: "",
@@ -449,9 +474,9 @@ function emptyForm(): FormState {
     driverRef: "",
     driverLicenseNo: "",
     driverMobile: "",
-    totalHire: "0",
+    totalHire: "0.00",
     balanceAt: "",
-    advanceAmount: "0",
+    advanceAmount: "0.00",
   }
 }
 
@@ -468,9 +493,15 @@ function validateForm(
   form: FormState,
   lines: VehicleReceiptLineUpsert[],
   fromLocationId?: string,
-  toLocationId?: string
+  toLocationId?: string,
+  rows: VehicleReceipt[] = []
 ): Record<string, string> {
   const errors: Record<string, string> = {}
+  if (!form.challanNo.trim()) {
+    errors.challanNo = "Lorry receipt number is mandatory."
+  } else if (rows.some((x) => x.challanNo.trim().toLowerCase() === form.challanNo.trim().toLowerCase())) {
+    errors.challanNo = "Lorry receipt number already exists."
+  }
   if (!form.branchId) errors.branchId = "Branch is mandatory."
   if (!form.challanDate) errors.challanDate = "Date is mandatory."
   if (!form.vehicleRef.trim()) errors.vehicleRef = "Vehicle is mandatory."
@@ -535,4 +566,15 @@ function toAmount(value: string): number {
 function toLocationRefValue(location: Location | undefined): string {
   if (!location) return ""
   return `${location.code} - ${location.name}`
+}
+
+function nextDocumentNo(prefix: string, existingNos: string[]): string {
+  const year = new Date().getFullYear()
+  const start = `${prefix}/${year}/`
+  const seq = existingNos
+    .filter((no) => no.startsWith(start))
+    .map((no) => Number(no.slice(start.length)))
+    .filter((n) => Number.isFinite(n))
+  const next = (seq.length ? Math.max(...seq) : 0) + 1
+  return `${start}${String(next).padStart(5, "0")}`
 }

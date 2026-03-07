@@ -54,7 +54,7 @@ public sealed class InMemoryInvoiceService : IInvoiceService
             var invoice = new InvoiceViewModel
             {
                 Id = Guid.NewGuid(),
-                InvoiceNo = _numberingService.NextInvoiceNo(),
+                InvoiceNo = ResolveInvoiceNo(model.InvoiceNo),
                 BranchId = model.BranchId,
                 InvoiceDate = model.InvoiceDate,
                 ConsignmentId = model.ConsignmentId,
@@ -70,5 +70,13 @@ public sealed class InMemoryInvoiceService : IInvoiceService
             _store.Invoices.Add(invoice);
             return Task.FromResult(invoice);
         }
+    }
+
+    private string ResolveInvoiceNo(string? requestedNo)
+    {
+        var invoiceNo = string.IsNullOrWhiteSpace(requestedNo) ? _numberingService.NextInvoiceNo() : requestedNo.Trim();
+        if (_store.Invoices.Any(x => x.InvoiceNo.Equals(invoiceNo, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException("Invoice number already exists.");
+        return invoiceNo;
     }
 }

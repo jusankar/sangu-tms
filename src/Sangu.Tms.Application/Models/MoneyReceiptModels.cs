@@ -2,6 +2,7 @@ namespace Sangu.Tms.Application.Models;
 
 public sealed class MoneyReceiptCreateModel
 {
+    public string? ReceiptNo { get; set; }
     public Guid BranchId { get; set; }
     public DateOnly ReceiptDate { get; set; }
     public decimal Amount { get; set; }
@@ -21,4 +22,3 @@ public sealed class MoneyReceiptViewModel
     public string? ReferenceNo { get; set; }
     public string Status { get; set; } = "Posted";
 }
-

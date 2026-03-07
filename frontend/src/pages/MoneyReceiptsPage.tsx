@@ -15,6 +15,7 @@ type ReceiptLine = {
   deduction: string
 }
 type FormState = {
+  receiptNo: string
   branchId: string
   receiptDate: string
   customerName: string
@@ -68,6 +69,10 @@ export function MoneyReceiptsPage() {
       setConsignments(consignmentRows)
       setCustomers(customerRows)
       setBranches(branchRows)
+      setForm((prev) => ({
+        ...prev,
+        receiptNo: prev.receiptNo || nextDocumentNo("RC/GEN", receiptRows.map((x) => x.receiptNo)),
+      }))
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load money receipts")
     } finally {
@@ -81,20 +86,23 @@ export function MoneyReceiptsPage() {
     setMessage("")
 
     const invoiceAmounts = computeInvoiceAmountMap(lines, invoices)
-    const errors = validateForm(form, lines, totalPayable, invoiceAmounts)
+    const errors = validateForm(form, lines, totalPayable, invoiceAmounts, rows)
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
     try {
+      let index = 0
       for (const [invoiceId, amount] of invoiceAmounts) {
         if (amount <= 0) continue
         await api.createReceiptForInvoice(invoiceId, {
+          receiptNo: resolveReceiptNo(form.receiptNo, index),
           branchId: form.branchId,
           receiptDate: form.receiptDate,
           amount,
           mode: form.mode,
           referenceNo: form.referenceNo.trim() || undefined,
         })
+        index += 1
       }
       setMessage("Money receipt posted.")
       onReset()
@@ -165,6 +173,7 @@ export function MoneyReceiptsPage() {
   function onReset() {
     setForm((prev) => ({
       ...emptyForm(),
+      receiptNo: nextDocumentNo("RC/GEN", rows.map((x) => x.receiptNo)),
       branchId: prev.branchId,
     }))
     setLines([emptyLine()])
@@ -202,6 +211,13 @@ export function MoneyReceiptsPage() {
             <fieldset className="consignment-wide">
               <legend>Receipt Header</legend>
               <div className="consignment-fields">
+                <label>
+                  <span className="label-text">
+                    Receipt No<sup className="required">*</sup>
+                  </span>
+                  <input value={form.receiptNo} onChange={(e) => setForm((prev) => ({ ...prev, receiptNo: e.target.value }))} />
+                  {fieldErrors.receiptNo ? <small className="error-text">{fieldErrors.receiptNo}</small> : null}
+                </label>
                 <label>
                   <span className="label-text">
                     Branch<sup className="required">*</sup>
@@ -432,6 +448,7 @@ export function MoneyReceiptsPage() {
 function emptyForm(): FormState {
   const today = new Date().toISOString().slice(0, 10)
   return {
+    receiptNo: "",
     branchId: "",
     receiptDate: today,
     customerName: "",
@@ -461,9 +478,14 @@ function validateForm(
   form: FormState,
   lines: ReceiptLine[],
   totalPayable: number,
-  invoiceAmounts: Map<string, number>
+  invoiceAmounts: Map<string, number>,
+  rows: MoneyReceipt[]
 ): Record<string, string> {
   const errors: Record<string, string> = {}
+  if (!form.receiptNo.trim()) errors.receiptNo = "Receipt number is mandatory."
+  if (rows.some((x) => x.receiptNo.trim().toLowerCase() === form.receiptNo.trim().toLowerCase())) {
+    errors.receiptNo = "Receipt number already exists."
+  }
   if (!form.branchId) errors.branchId = "Branch is mandatory."
   if (!form.receiptDate) errors.receiptDate = "Date is mandatory."
   if (!form.customerName.trim()) errors.customerName = "Customer is mandatory."
@@ -513,4 +535,28 @@ function toAmount(value: string | number): number {
 
 function toWeight(value: string | number): number {
   return Number(toAmount(value).toFixed(3))
+}
+
+function nextDocumentNo(prefix: string, existingNos: string[]): string {
+  const year = new Date().getFullYear()
+  const start = `${prefix}/${year}/`
+  const seq = existingNos
+    .filter((no) => no.startsWith(start))
+    .map((no) => Number(no.slice(start.length)))
+    .filter((n) => Number.isFinite(n))
+  const next = (seq.length ? Math.max(...seq) : 0) + 1
+  return `${start}${String(next).padStart(5, "0")}`
+}
+
+function resolveReceiptNo(base: string, index: number): string | undefined {
+  const trimmed = base.trim()
+  if (!trimmed) return undefined
+  if (index === 0) return trimmed
+  const match = /(.*\/)(\d+)$/.exec(trimmed)
+  if (match) {
+    const prefix = match[1]
+    const seq = Number(match[2]) + index
+    return `${prefix}${String(seq).padStart(match[2].length, "0")}`
+  }
+  return `${trimmed}-${index + 1}`
 }

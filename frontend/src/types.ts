@@ -45,6 +45,7 @@ export type Consignment = {
 }
 
 export type ConsignmentUpsert = {
+  consignmentNo?: string
   branchId: string
   bookingDate: string
   customerId: string
@@ -105,6 +106,7 @@ export type Invoice = {
 }
 
 export type InvoiceUpsert = {
+  invoiceNo?: string
   branchId: string
   invoiceDate: string
   consignmentId: string
@@ -128,6 +130,7 @@ export type MoneyReceipt = {
 }
 
 export type MoneyReceiptUpsert = {
+  receiptNo?: string
   branchId: string
   receiptDate: string
   amount: number
@@ -183,6 +186,7 @@ export type VehicleReceiptLineUpsert = {
 }
 
 export type VehicleReceiptUpsert = {
+  challanNo?: string
   branchId: string
   challanDate: string
   fromLocationId?: string

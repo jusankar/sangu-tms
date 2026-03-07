@@ -39,7 +39,7 @@ public sealed class InMemoryMoneyReceiptService : IMoneyReceiptService
             {
                 Id = Guid.NewGuid(),
                 InvoiceId = invoiceId,
-                ReceiptNo = _numberingService.NextReceiptNo(),
+                ReceiptNo = ResolveReceiptNo(model.ReceiptNo),
                 BranchId = model.BranchId,
                 ReceiptDate = model.ReceiptDate,
                 Amount = model.Amount,
@@ -55,5 +55,12 @@ public sealed class InMemoryMoneyReceiptService : IMoneyReceiptService
             return Task.FromResult<MoneyReceiptViewModel?>(receipt);
         }
     }
-}
 
+    private string ResolveReceiptNo(string? requestedNo)
+    {
+        var receiptNo = string.IsNullOrWhiteSpace(requestedNo) ? _numberingService.NextReceiptNo() : requestedNo.Trim();
+        if (_store.MoneyReceipts.Any(x => x.ReceiptNo.Equals(receiptNo, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException("Money receipt number already exists.");
+        return receiptNo;
+    }
+}

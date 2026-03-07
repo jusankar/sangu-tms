@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom"
 import { RequireAuth } from "./auth/RequireAuth"
 import { AppLayout } from "./layout/AppLayout"
 import { BranchesPage } from "./pages/BranchesPage"
+import { BookingReportPage } from "./pages/BookingReportPage"
+import { BillingReportPage } from "./pages/BillingReportPage"
 import { ConsignmentsPage } from "./pages/ConsignmentsPage"
 import { CustomersPage } from "./pages/CustomersPage"
 import { DashboardPage } from "./pages/DashboardPage"
@@ -11,8 +13,9 @@ import { LoginPage } from "./pages/LoginPage"
 import { LocationsPage } from "./pages/LocationsPage"
 import { MoneyReceiptsPage } from "./pages/MoneyReceiptsPage"
 import { OutstandingPage } from "./pages/OutstandingPage"
-import { PlaceholderPage } from "./pages/PlaceholderPage"
+import { PaymentReportPage } from "./pages/PaymentReportPage"
 import { VehicleReceiptsPage } from "./pages/VehicleReceiptsPage"
+import { VehicleStatementReportPage } from "./pages/VehicleStatementReportPage"
 import { VehiclesPage } from "./pages/VehiclesPage"
 
 function App() {
@@ -33,11 +36,11 @@ function App() {
           <Route path="/settings/locations" element={<LocationsPage />} />
           <Route path="/settings/drivers" element={<DriversPage />} />
           <Route path="/settings/vehicles" element={<VehiclesPage />} />
-          <Route path="/reports/booking" element={<PlaceholderPage title="Booking Report" />} />
-          <Route path="/reports/vehicle-statement" element={<PlaceholderPage title="Vehicle Statement Report" />} />
-          <Route path="/reports/billing" element={<PlaceholderPage title="Billing Report" />} />
+          <Route path="/reports/booking" element={<BookingReportPage />} />
+          <Route path="/reports/vehicle-statement" element={<VehicleStatementReportPage />} />
+          <Route path="/reports/billing" element={<BillingReportPage />} />
           <Route path="/reports/outstanding" element={<OutstandingPage />} />
-          <Route path="/reports/payment" element={<PlaceholderPage title="Payment Report" />} />
+          <Route path="/reports/payment" element={<PaymentReportPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

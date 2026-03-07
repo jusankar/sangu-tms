@@ -34,10 +34,16 @@ public sealed class InMemoryConsignmentService : IConsignmentService
         ConsignmentViewModel created;
         lock (_store.SyncRoot)
         {
+            var consignmentNo = string.IsNullOrWhiteSpace(model.ConsignmentNo)
+                ? _numberingService.NextConsignmentNo()
+                : model.ConsignmentNo.Trim();
+            if (_store.Consignments.Any(x => x.ConsignmentNo.Equals(consignmentNo, StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException("Consignment number already exists.");
+
             created = new ConsignmentViewModel
             {
                 Id = Guid.NewGuid(),
-                ConsignmentNo = _numberingService.NextConsignmentNo(),
+                ConsignmentNo = consignmentNo,
                 BranchId = model.BranchId,
                 BookingDate = model.BookingDate,
                 CustomerId = model.CustomerId,
@@ -88,6 +94,13 @@ public sealed class InMemoryConsignmentService : IConsignmentService
             if (row is null)
             {
                 return Task.FromResult<ConsignmentViewModel?>(null);
+            }
+            if (!string.IsNullOrWhiteSpace(model.ConsignmentNo))
+            {
+                var no = model.ConsignmentNo.Trim();
+                if (_store.Consignments.Any(x => x.Id != id && x.ConsignmentNo.Equals(no, StringComparison.OrdinalIgnoreCase)))
+                    throw new ArgumentException("Consignment number already exists.");
+                row.ConsignmentNo = no;
             }
 
             row.BranchId = model.BranchId;

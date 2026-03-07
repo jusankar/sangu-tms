@@ -3,23 +3,13 @@ import { TablePagination } from "../components/TablePagination"
 import { DateRangePicker } from "../components/ui/DateRangePicker"
 import { api } from "../lib/api"
 import { formatDate, formatMoney, printReportPdf } from "../lib/reporting"
-import type { Branch, Consignment, Customer, Invoice } from "../types"
+import type { Branch, Consignment, Customer, Location } from "../types"
 
-type OutstandingRow = {
-  invoiceId: string
-  branchId: string
-  invoiceNo: string
-  invoiceDate: string
-  customerId: string
-  customerName: string
-  consignmentNo: string
-  outstandingAmount: number
-}
-
-export function OutstandingPage() {
-  const [rows, setRows] = useState<OutstandingRow[]>([])
+export function BookingReportPage() {
+  const [rows, setRows] = useState<Consignment[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
   const [branchId, setBranchId] = useState("")
   const [customerId, setCustomerId] = useState("")
   const [fromDate, setFromDate] = useState("")
@@ -35,17 +25,18 @@ export function OutstandingPage() {
   async function loadAll() {
     setError("")
     try {
-      const [invoices, consignments, customerRows, branchRows] = await Promise.all([
-        api.invoices(),
+      const [consignments, branchRows, customerRows, locationRows] = await Promise.all([
         api.consignments(),
-        api.customers(),
         api.branches(),
+        api.customers(),
+        api.locations(),
       ])
-      setCustomers(customerRows)
+      setRows(consignments)
       setBranches(branchRows)
-      setRows(mapOutstandingRows(invoices, consignments, customerRows))
+      setCustomers(customerRows)
+      setLocations(locationRows)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load outstanding report")
+      setError(e instanceof Error ? e.message : "Failed to load booking report")
     }
   }
 
@@ -54,8 +45,8 @@ export function OutstandingPage() {
       rows.filter((row) => {
         if (branchId && row.branchId !== branchId) return false
         if (customerId && row.customerId !== customerId) return false
-        if (fromDate && row.invoiceDate < fromDate) return false
-        if (toDate && row.invoiceDate > toDate) return false
+        if (fromDate && row.bookingDate < fromDate) return false
+        if (toDate && row.bookingDate > toDate) return false
         return true
       }),
     [rows, branchId, customerId, fromDate, toDate]
@@ -65,7 +56,7 @@ export function OutstandingPage() {
 
   function onPrint() {
     printReportPdf({
-      title: "Outstanding Report",
+      title: "Booking Report",
       filters: [
         { label: "Branch", value: findBranchName(branchId, branches) || "All" },
         { label: "Customer", value: findCustomerName(customerId, customers) || "All" },
@@ -75,10 +66,14 @@ export function OutstandingPage() {
       columns: [
         { title: "Sl", value: (_, i) => String(i + 1), align: "right" },
         { title: "Branch", value: (r) => findBranchCodeName(r.branchId, branches) },
-        { title: "Bill Number", value: (r) => r.invoiceNo },
-        { title: "Date", value: (r) => formatDate(r.invoiceDate) },
-        { title: "Consignment Number", value: (r) => r.consignmentNo || "-" },
-        { title: "Total", value: (r) => formatMoney(r.outstandingAmount), align: "right" },
+        { title: "Consignment Number", value: (r) => r.consignmentNo },
+        { title: "Booking Date", value: (r) => formatDate(r.bookingDate) },
+        { title: "Customer", value: (r) => findCustomerName(r.customerId, customers) || "-" },
+        { title: "Consignor", value: (r) => r.consignorName || "-" },
+        { title: "Consignee", value: (r) => r.consigneeName || "-" },
+        { title: "From", value: (r) => findLocationName(r.fromLocationId, locations) },
+        { title: "To", value: (r) => findLocationName(r.toLocationId, locations) },
+        { title: "Final Freight", value: (r) => formatMoney(r.freightAmount), align: "right" },
       ],
       rows: filteredRows,
     })
@@ -88,8 +83,8 @@ export function OutstandingPage() {
     <section className="panel">
       <div className="consignment-toolbar">
         <div>
-          <h2>Outstanding Report</h2>
-          <p>Filter outstanding bills and download/print PDF.</p>
+          <h2>Booking Report</h2>
+          <p>Filter bookings and download/print as PDF.</p>
         </div>
         <div className="consignment-actions">
           <button className="btn-secondary" type="button" onClick={loadAll}>Refresh</button>
@@ -120,6 +115,8 @@ export function OutstandingPage() {
         <DateRangePicker
           from={fromDate}
           to={toDate}
+          fromLabel="Booking Date From"
+          toLabel="Booking Date To"
           onFromChange={(value) => {
             setFromDate(value)
             setPage(1)
@@ -136,21 +133,29 @@ export function OutstandingPage() {
           <tr>
             <th>Sl</th>
             <th>Branch</th>
-            <th>Bill Number</th>
-            <th>Date</th>
             <th>Consignment Number</th>
-            <th>Total</th>
+            <th>Booking Date</th>
+            <th>Customer</th>
+            <th>Consignor</th>
+            <th>Consignee</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Final Freight</th>
           </tr>
         </thead>
         <tbody>
-          {pagedRows.map((r, index) => (
-            <tr key={r.invoiceId}>
+          {pagedRows.map((row, index) => (
+            <tr key={row.id}>
               <td className="numeric-cell">{(page - 1) * pageSize + index + 1}</td>
-              <td>{findBranchCodeName(r.branchId, branches)}</td>
-              <td>{r.invoiceNo}</td>
-              <td>{r.invoiceDate}</td>
-              <td>{r.consignmentNo || "-"}</td>
-              <td className="numeric-cell">{formatMoney(r.outstandingAmount)}</td>
+              <td>{findBranchCodeName(row.branchId, branches)}</td>
+              <td>{row.consignmentNo}</td>
+              <td>{row.bookingDate}</td>
+              <td>{findCustomerName(row.customerId, customers) || "-"}</td>
+              <td>{row.consignorName || "-"}</td>
+              <td>{row.consigneeName || "-"}</td>
+              <td>{findLocationName(row.fromLocationId, locations)}</td>
+              <td>{findLocationName(row.toLocationId, locations)}</td>
+              <td className="numeric-cell">{formatMoney(row.freightAmount)}</td>
             </tr>
           ))}
         </tbody>
@@ -170,25 +175,6 @@ export function OutstandingPage() {
   )
 }
 
-function mapOutstandingRows(invoices: Invoice[], consignments: Consignment[], customers: Customer[]): OutstandingRow[] {
-  return invoices
-    .map((invoice) => {
-      const consignment = consignments.find((x) => x.id === invoice.consignmentId)
-      const outstandingAmount = invoice.totalAmount - invoice.receivedAmount
-      return {
-        invoiceId: invoice.id,
-        branchId: invoice.branchId,
-        invoiceNo: invoice.invoiceNo,
-        invoiceDate: invoice.invoiceDate,
-        customerId: consignment?.customerId || "",
-        customerName: findCustomerName(consignment?.customerId || "", customers) || consignment?.consignorName || "",
-        consignmentNo: consignment?.consignmentNo || "",
-        outstandingAmount,
-      }
-    })
-    .filter((x) => x.outstandingAmount > 0)
-}
-
 function findBranchCodeName(branchId: string, branches: Branch[]): string {
   const row = branches.find((x) => x.id === branchId)
   return row ? `${row.code} - ${row.name}` : "-"
@@ -200,4 +186,8 @@ function findBranchName(branchId: string, branches: Branch[]): string {
 
 function findCustomerName(customerId: string, customers: Customer[]): string {
   return customers.find((x) => x.id === customerId)?.name || ""
+}
+
+function findLocationName(locationId: string, locations: Location[]): string {
+  return locations.find((x) => x.id === locationId)?.name || "-"
 }

@@ -2,6 +2,7 @@ namespace Sangu.Tms.Application.Models;
 
 public sealed class InvoiceCreateModel
 {
+    public string? InvoiceNo { get; set; }
     public Guid BranchId { get; set; }
     public DateOnly InvoiceDate { get; set; }
     public Guid ConsignmentId { get; set; }
@@ -27,4 +28,3 @@ public sealed class InvoiceViewModel
     public DateOnly? DueDate { get; set; }
     public string Status { get; set; } = "Draft";
 }
-

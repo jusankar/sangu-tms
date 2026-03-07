@@ -47,7 +47,7 @@ public sealed class InMemoryChallanService : IChallanService
             var challan = new ChallanViewModel
             {
                 Id = Guid.NewGuid(),
-                ChallanNo = _numberingService.NextChallanNo(),
+                ChallanNo = ResolveChallanNo(model.ChallanNo),
                 BranchId = model.BranchId,
                 ChallanDate = model.ChallanDate,
                 FromLocationId = model.FromLocationId,
@@ -82,6 +82,14 @@ public sealed class InMemoryChallanService : IChallanService
             _store.Challans.Add(challan);
             return Task.FromResult(challan);
         }
+    }
+
+    private string ResolveChallanNo(string? requestedNo)
+    {
+        var challanNo = string.IsNullOrWhiteSpace(requestedNo) ? _numberingService.NextChallanNo() : requestedNo.Trim();
+        if (_store.Challans.Any(x => x.ChallanNo.Equals(challanNo, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException("Lorry receipt number already exists.");
+        return challanNo;
     }
 
     public Task<LorryPaymentViewModel?> AddPaymentAsync(Guid challanId, LorryPaymentCreateModel model, CancellationToken cancellationToken = default)

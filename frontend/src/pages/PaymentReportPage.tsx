@@ -3,23 +3,14 @@ import { TablePagination } from "../components/TablePagination"
 import { DateRangePicker } from "../components/ui/DateRangePicker"
 import { api } from "../lib/api"
 import { formatDate, formatMoney, printReportPdf } from "../lib/reporting"
-import type { Branch, Consignment, Customer, Invoice } from "../types"
+import type { Branch, Consignment, Customer, Invoice, MoneyReceipt } from "../types"
 
-type OutstandingRow = {
-  invoiceId: string
-  branchId: string
-  invoiceNo: string
-  invoiceDate: string
-  customerId: string
-  customerName: string
-  consignmentNo: string
-  outstandingAmount: number
-}
-
-export function OutstandingPage() {
-  const [rows, setRows] = useState<OutstandingRow[]>([])
+export function PaymentReportPage() {
+  const [rows, setRows] = useState<MoneyReceipt[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [consignments, setConsignments] = useState<Consignment[]>([])
   const [branchId, setBranchId] = useState("")
   const [customerId, setCustomerId] = useState("")
   const [fromDate, setFromDate] = useState("")
@@ -35,17 +26,20 @@ export function OutstandingPage() {
   async function loadAll() {
     setError("")
     try {
-      const [invoices, consignments, customerRows, branchRows] = await Promise.all([
+      const [receiptRows, branchRows, customerRows, invoiceRows, consignmentRows] = await Promise.all([
+        api.receipts(),
+        api.branches(),
+        api.customers(),
         api.invoices(),
         api.consignments(),
-        api.customers(),
-        api.branches(),
       ])
-      setCustomers(customerRows)
+      setRows(receiptRows)
       setBranches(branchRows)
-      setRows(mapOutstandingRows(invoices, consignments, customerRows))
+      setCustomers(customerRows)
+      setInvoices(invoiceRows)
+      setConsignments(consignmentRows)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load outstanding report")
+      setError(e instanceof Error ? e.message : "Failed to load payment report")
     }
   }
 
@@ -53,19 +47,23 @@ export function OutstandingPage() {
     () =>
       rows.filter((row) => {
         if (branchId && row.branchId !== branchId) return false
-        if (customerId && row.customerId !== customerId) return false
-        if (fromDate && row.invoiceDate < fromDate) return false
-        if (toDate && row.invoiceDate > toDate) return false
+        if (fromDate && row.receiptDate < fromDate) return false
+        if (toDate && row.receiptDate > toDate) return false
+        if (customerId) {
+          const invoice = invoices.find((x) => x.id === row.invoiceId)
+          const consignment = consignments.find((x) => x.id === invoice?.consignmentId)
+          if (!consignment || consignment.customerId !== customerId) return false
+        }
         return true
       }),
-    [rows, branchId, customerId, fromDate, toDate]
+    [rows, branchId, fromDate, toDate, customerId, invoices, consignments]
   )
 
   const pagedRows = filteredRows.slice((page - 1) * pageSize, page * pageSize)
 
   function onPrint() {
     printReportPdf({
-      title: "Outstanding Report",
+      title: "Payment Report",
       filters: [
         { label: "Branch", value: findBranchName(branchId, branches) || "All" },
         { label: "Customer", value: findCustomerName(customerId, customers) || "All" },
@@ -75,10 +73,12 @@ export function OutstandingPage() {
       columns: [
         { title: "Sl", value: (_, i) => String(i + 1), align: "right" },
         { title: "Branch", value: (r) => findBranchCodeName(r.branchId, branches) },
-        { title: "Bill Number", value: (r) => r.invoiceNo },
-        { title: "Date", value: (r) => formatDate(r.invoiceDate) },
-        { title: "Consignment Number", value: (r) => r.consignmentNo || "-" },
-        { title: "Total", value: (r) => formatMoney(r.outstandingAmount), align: "right" },
+        { title: "MR Number", value: (r) => r.receiptNo },
+        { title: "Date", value: (r) => formatDate(r.receiptDate) },
+        { title: "Customer", value: (r) => findReceiptCustomerName(r, invoices, consignments, customers) },
+        { title: "Amount", value: (r) => formatMoney(r.amount), align: "right" },
+        { title: "Deduction", value: () => formatMoney(0), align: "right" },
+        { title: "Total Received", value: (r) => formatMoney(r.amount), align: "right" },
       ],
       rows: filteredRows,
     })
@@ -88,8 +88,8 @@ export function OutstandingPage() {
     <section className="panel">
       <div className="consignment-toolbar">
         <div>
-          <h2>Outstanding Report</h2>
-          <p>Filter outstanding bills and download/print PDF.</p>
+          <h2>Payment Report</h2>
+          <p>Filter money receipts by branch/date/customer and print PDF.</p>
         </div>
         <div className="consignment-actions">
           <button className="btn-secondary" type="button" onClick={loadAll}>Refresh</button>
@@ -136,21 +136,25 @@ export function OutstandingPage() {
           <tr>
             <th>Sl</th>
             <th>Branch</th>
-            <th>Bill Number</th>
+            <th>MR Number</th>
             <th>Date</th>
-            <th>Consignment Number</th>
-            <th>Total</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Deduction</th>
+            <th>Total Received</th>
           </tr>
         </thead>
         <tbody>
-          {pagedRows.map((r, index) => (
-            <tr key={r.invoiceId}>
+          {pagedRows.map((row, index) => (
+            <tr key={row.id}>
               <td className="numeric-cell">{(page - 1) * pageSize + index + 1}</td>
-              <td>{findBranchCodeName(r.branchId, branches)}</td>
-              <td>{r.invoiceNo}</td>
-              <td>{r.invoiceDate}</td>
-              <td>{r.consignmentNo || "-"}</td>
-              <td className="numeric-cell">{formatMoney(r.outstandingAmount)}</td>
+              <td>{findBranchCodeName(row.branchId, branches)}</td>
+              <td>{row.receiptNo}</td>
+              <td>{row.receiptDate}</td>
+              <td>{findReceiptCustomerName(row, invoices, consignments, customers)}</td>
+              <td className="numeric-cell">{formatMoney(row.amount)}</td>
+              <td className="numeric-cell">{formatMoney(0)}</td>
+              <td className="numeric-cell">{formatMoney(row.amount)}</td>
             </tr>
           ))}
         </tbody>
@@ -170,25 +174,6 @@ export function OutstandingPage() {
   )
 }
 
-function mapOutstandingRows(invoices: Invoice[], consignments: Consignment[], customers: Customer[]): OutstandingRow[] {
-  return invoices
-    .map((invoice) => {
-      const consignment = consignments.find((x) => x.id === invoice.consignmentId)
-      const outstandingAmount = invoice.totalAmount - invoice.receivedAmount
-      return {
-        invoiceId: invoice.id,
-        branchId: invoice.branchId,
-        invoiceNo: invoice.invoiceNo,
-        invoiceDate: invoice.invoiceDate,
-        customerId: consignment?.customerId || "",
-        customerName: findCustomerName(consignment?.customerId || "", customers) || consignment?.consignorName || "",
-        consignmentNo: consignment?.consignmentNo || "",
-        outstandingAmount,
-      }
-    })
-    .filter((x) => x.outstandingAmount > 0)
-}
-
 function findBranchCodeName(branchId: string, branches: Branch[]): string {
   const row = branches.find((x) => x.id === branchId)
   return row ? `${row.code} - ${row.name}` : "-"
@@ -200,4 +185,15 @@ function findBranchName(branchId: string, branches: Branch[]): string {
 
 function findCustomerName(customerId: string, customers: Customer[]): string {
   return customers.find((x) => x.id === customerId)?.name || ""
+}
+
+function findReceiptCustomerName(
+  receipt: MoneyReceipt,
+  invoices: Invoice[],
+  consignments: Consignment[],
+  customers: Customer[]
+): string {
+  const invoice = invoices.find((x) => x.id === receipt.invoiceId)
+  const consignment = consignments.find((x) => x.id === invoice?.consignmentId)
+  return findCustomerName(consignment?.customerId || "", customers) || consignment?.consignorName || "-"
 }

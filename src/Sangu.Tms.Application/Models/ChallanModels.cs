@@ -2,6 +2,7 @@ namespace Sangu.Tms.Application.Models;
 
 public sealed class ChallanCreateModel
 {
+    public string? ChallanNo { get; set; }
     public Guid BranchId { get; set; }
     public DateOnly ChallanDate { get; set; }
     public Guid? FromLocationId { get; set; }

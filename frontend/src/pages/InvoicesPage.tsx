@@ -15,6 +15,7 @@ type InvoiceLine = {
   tax: string
 }
 type FormState = {
+  invoiceNo: string
   branchId: string
   invoiceDate: string
   dueDate: string
@@ -67,6 +68,10 @@ export function InvoicesPage() {
       setConsignments(consignmentRows)
       setCustomers(customerRows)
       setVehicles(vehicleRows)
+      setForm((prev) => ({
+        ...prev,
+        invoiceNo: prev.invoiceNo || nextDocumentNo("IN/GEN", invoiceRows.map((x) => x.invoiceNo)),
+      }))
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load invoices")
     } finally {
@@ -80,12 +85,13 @@ export function InvoicesPage() {
     setMessage("")
     const primaryConsignmentId = findConsignmentId(lines[0]?.consignmentNo || "", consignments)
     const nonEmptyLines = lines.filter((line) => line.consignmentNo.trim() || line.description.trim() || toAmount(line.amount) > 0)
-    const errors = validateInvoiceForm(form, nonEmptyLines, primaryConsignmentId)
+    const errors = validateInvoiceForm(form, nonEmptyLines, primaryConsignmentId, rows)
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
     try {
       await api.createInvoice({
+        invoiceNo: form.invoiceNo.trim() || undefined,
         branchId: form.branchId,
         invoiceDate: form.invoiceDate,
         dueDate: form.dueDate || undefined,
@@ -107,6 +113,7 @@ export function InvoicesPage() {
   function onReset() {
     setForm((prev) => ({
       ...emptyForm(),
+      invoiceNo: nextDocumentNo("IN/GEN", rows.map((x) => x.invoiceNo)),
       branchId: prev.branchId,
       vehicleNo: prev.vehicleNo,
     }))
@@ -212,6 +219,13 @@ export function InvoicesPage() {
               <div className="consignment-fields">
                 <label>
                   <span className="label-text">
+                    Invoice No<sup className="required">*</sup>
+                  </span>
+                  <input value={form.invoiceNo} onChange={(e) => setForm((prev) => ({ ...prev, invoiceNo: e.target.value }))} />
+                  {fieldErrors.invoiceNo ? <small className="error-text">{fieldErrors.invoiceNo}</small> : null}
+                </label>
+                <label>
+                  <span className="label-text">
                     Branch<sup className="required">*</sup>
                   </span>
                   <select value={form.branchId} onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value }))}>
@@ -290,7 +304,7 @@ export function InvoicesPage() {
                       <input className="lr-col-wide" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
                     </td>
                     <td>
-                      <input value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
+                      <input className="numeric-input" value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
                     </td>
                     <td>
                       <input
@@ -336,8 +350,8 @@ export function InvoicesPage() {
                 <tr>
                   <td />
                   <td />
-                  <td>{totalPkg.toFixed(0)}</td>
-                  <td>{totalWeight.toFixed(3)}</td>
+                  <td className="numeric-cell">{totalPkg.toFixed(0)}</td>
+                  <td className="numeric-cell">{totalWeight.toFixed(3)}</td>
                   <td />
                   <td />
                   <td />
@@ -345,19 +359,19 @@ export function InvoicesPage() {
                 </tr>
                 <tr>
                   <td colSpan={5} />
-                  <td colSpan={3}>
+                  <td colSpan={3} className="numeric-cell">
                     <strong>Total Tax:</strong> {taxTotal.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
                   <td colSpan={5} />
-                  <td colSpan={3}>
+                  <td colSpan={3} className="numeric-cell">
                     <strong>Total Amount:</strong> {taxableAmount.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
                   <td colSpan={5} />
-                  <td colSpan={3}>
+                  <td colSpan={3} className="numeric-cell">
                     <strong>Grand Total:</strong> {grandTotal.toFixed(2)}
                   </td>
                 </tr>
@@ -415,10 +429,10 @@ export function InvoicesPage() {
                 <tr key={row.id}>
                   <td>{row.invoiceNo}</td>
                   <td>{row.invoiceDate}</td>
-                  <td>{row.taxableAmount.toFixed(2)}</td>
-                  <td>{row.gstAmount.toFixed(2)}</td>
-                  <td>{row.totalAmount.toFixed(2)}</td>
-                  <td>{row.receivedAmount.toFixed(2)}</td>
+                  <td className="numeric-cell">{row.taxableAmount.toFixed(2)}</td>
+                  <td className="numeric-cell">{row.gstAmount.toFixed(2)}</td>
+                  <td className="numeric-cell">{row.totalAmount.toFixed(2)}</td>
+                  <td className="numeric-cell">{row.receivedAmount.toFixed(2)}</td>
                   <td>{row.status}</td>
                 </tr>
               ))}
@@ -443,6 +457,7 @@ export function InvoicesPage() {
 function emptyForm(): FormState {
   const today = new Date().toISOString().slice(0, 10)
   return {
+    invoiceNo: "",
     branchId: "",
     invoiceDate: today,
     dueDate: "",
@@ -468,9 +483,15 @@ function emptyLine(): InvoiceLine {
 function validateInvoiceForm(
   form: FormState,
   lines: InvoiceLine[],
-  primaryConsignmentId?: string
+  primaryConsignmentId?: string,
+  rows: Invoice[] = []
 ): Record<string, string> {
   const errors: Record<string, string> = {}
+  if (!form.invoiceNo.trim()) {
+    errors.invoiceNo = "Invoice number is mandatory."
+  } else if (rows.some((x) => x.invoiceNo.trim().toLowerCase() === form.invoiceNo.trim().toLowerCase())) {
+    errors.invoiceNo = "Invoice number already exists."
+  }
   if (!form.branchId) errors.branchId = "Branch is mandatory."
   if (!form.invoiceDate) errors.invoiceDate = "Invoice date is mandatory."
   if (!primaryConsignmentId) errors.lines = "First row must include a valid consignment number."
@@ -496,6 +517,17 @@ function findConsignmentByNo(consignmentNo: string, options: Consignment[]): Con
 
 function findConsignmentId(consignmentNo: string, options: Consignment[]): string | undefined {
   return findConsignmentByNo(consignmentNo, options)?.id
+}
+
+function nextDocumentNo(prefix: string, existingNos: string[]): string {
+  const year = new Date().getFullYear()
+  const start = `${prefix}/${year}/`
+  const seq = existingNos
+    .filter((no) => no.startsWith(start))
+    .map((no) => Number(no.slice(start.length)))
+    .filter((n) => Number.isFinite(n))
+  const next = (seq.length ? Math.max(...seq) : 0) + 1
+  return `${start}${String(next).padStart(5, "0")}`
 }
 
 function findCustomerByName(name: string, options: Customer[]): Customer | undefined {

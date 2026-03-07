@@ -19,6 +19,7 @@ type LocationOption = { id: string; code: string; name: string; stateName?: stri
 type TabKey = "form" | "list"
 
 type ConsignmentFormState = {
+  consignmentNo: string
   branchId: string
   bookingDate: string
   customerId: string
@@ -76,10 +77,11 @@ export function ConsignmentsPage() {
     () => toAmount(form.packages) * toAmount(form.ratePerQuintal),
     [form.packages, form.ratePerQuintal]
   )
+  const basicFreightEffective = basicFreightCalculated > 0 ? basicFreightCalculated : toAmount(form.basicFreight)
 
   const freightAmount = useMemo(() => {
     const totalCharges =
-      basicFreightCalculated +
+      basicFreightEffective +
       toAmount(form.stCharge) +
       toAmount(form.gstAmount) +
       toAmount(form.hamaliCharge) +
@@ -88,7 +90,7 @@ export function ConsignmentsPage() {
     return totalCharges - toAmount(form.advancePaid)
   }, [
     form.advancePaid,
-    basicFreightCalculated,
+    basicFreightEffective,
     form.collectionCharge,
     form.doorDeliveryCharge,
     form.gstAmount,
@@ -114,6 +116,10 @@ export function ConsignmentsPage() {
       setCustomers(customerRows)
       setLocations(locationRows)
       setVehicles(vehicleRows)
+      setForm((prev) => ({
+        ...prev,
+        consignmentNo: prev.consignmentNo || nextDocumentNo("CN/GEN", consignments.map((x) => x.consignmentNo)),
+      }))
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load consignments")
     } finally {
@@ -128,11 +134,11 @@ export function ConsignmentsPage() {
 
     const fromLocationId = findLocationId(form.fromLocationName, locations)
     const toLocationId = findLocationId(form.toLocationName, locations)
-    const errors = validateConsignmentForm(form, fromLocationId, toLocationId)
+    const errors = validateConsignmentForm(form, fromLocationId, toLocationId, rows, editingId)
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
-    const payload = toPayload(form, freightAmount, fromLocationId!, toLocationId!, basicFreightCalculated)
+    const payload = toPayload(form, freightAmount, fromLocationId!, toLocationId!, basicFreightEffective)
 
     try {
       if (editingId) {
@@ -155,6 +161,7 @@ export function ConsignmentsPage() {
     setFieldErrors({})
     setTab("form")
     setForm({
+      consignmentNo: row.consignmentNo,
       branchId: row.branchId,
       bookingDate: row.bookingDate,
       customerId: row.customerId,
@@ -208,6 +215,7 @@ export function ConsignmentsPage() {
     setFieldErrors({})
     setForm((prev) => ({
       ...emptyForm(),
+      consignmentNo: nextDocumentNo("CN/GEN", rows.map((x) => x.consignmentNo)),
       branchId: prev.branchId,
       customerId: prev.customerId,
       fromLocationName: prev.fromLocationName,
@@ -262,6 +270,13 @@ export function ConsignmentsPage() {
             <fieldset>
               <legend>Booking And Parties</legend>
               <div className="consignment-fields">
+                <label>
+                  <span className="label-text">
+                    Consignment No<sup className="required">*</sup>
+                  </span>
+                  <input value={form.consignmentNo} onChange={(e) => setForm((prev) => ({ ...prev, consignmentNo: e.target.value }))} />
+                  {fieldErrors.consignmentNo ? <small className="error-text">{fieldErrors.consignmentNo}</small> : null}
+                </label>
                 <label>
                   <span className="label-text">
                     Branch<sup className="required">*</sup>
@@ -418,20 +433,46 @@ export function ConsignmentsPage() {
                   <span className="label-text">
                     Basic Freight<sup className="required">*</sup>
                   </span>
-                  <input className="numeric-input" type="text" inputMode="decimal" value={basicFreightCalculated.toFixed(2)} readOnly />
+                  <input
+                    className="numeric-input"
+                    type="text"
+                    inputMode="decimal"
+                    value={form.basicFreight}
+                    placeholder={basicFreightCalculated > 0 ? basicFreightCalculated.toFixed(2) : "0.00"}
+                    onChange={(e) => setForm((prev) => ({ ...prev, basicFreight: e.target.value }))}
+                    onBlur={() => setForm((prev) => ({ ...prev, basicFreight: format2(prev.basicFreight) }))}
+                  />
                   {fieldErrors.basicFreight ? <small className="error-text">{fieldErrors.basicFreight}</small> : null}
                 </label>
                 <label>
                   S.T. Charge
-                  <input type="text" inputMode="decimal" value={form.stCharge} onChange={(e) => setForm((prev) => ({ ...prev, stCharge: e.target.value }))} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.stCharge}
+                    onChange={(e) => setForm((prev) => ({ ...prev, stCharge: e.target.value }))}
+                    onBlur={() => setForm((prev) => ({ ...prev, stCharge: format2(prev.stCharge) }))}
+                  />
                 </label>
                 <label>
                   GST
-                  <input type="text" inputMode="decimal" value={form.gstAmount} onChange={(e) => setForm((prev) => ({ ...prev, gstAmount: e.target.value }))} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.gstAmount}
+                    onChange={(e) => setForm((prev) => ({ ...prev, gstAmount: e.target.value }))}
+                    onBlur={() => setForm((prev) => ({ ...prev, gstAmount: format2(prev.gstAmount) }))}
+                  />
                 </label>
                 <label>
                   Hamali
-                  <input type="text" inputMode="decimal" value={form.hamaliCharge} onChange={(e) => setForm((prev) => ({ ...prev, hamaliCharge: e.target.value }))} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.hamaliCharge}
+                    onChange={(e) => setForm((prev) => ({ ...prev, hamaliCharge: e.target.value }))}
+                    onBlur={() => setForm((prev) => ({ ...prev, hamaliCharge: format2(prev.hamaliCharge) }))}
+                  />
                 </label>
                 <label>
                   Door Delivery Charge
@@ -440,6 +481,7 @@ export function ConsignmentsPage() {
                     inputMode="decimal"
                     value={form.doorDeliveryCharge}
                     onChange={(e) => setForm((prev) => ({ ...prev, doorDeliveryCharge: e.target.value }))}
+                    onBlur={() => setForm((prev) => ({ ...prev, doorDeliveryCharge: format2(prev.doorDeliveryCharge) }))}
                   />
                 </label>
                 <label>
@@ -449,11 +491,18 @@ export function ConsignmentsPage() {
                     inputMode="decimal"
                     value={form.collectionCharge}
                     onChange={(e) => setForm((prev) => ({ ...prev, collectionCharge: e.target.value }))}
+                    onBlur={() => setForm((prev) => ({ ...prev, collectionCharge: format2(prev.collectionCharge) }))}
                   />
                 </label>
                 <label>
                   Advance Paid
-                  <input type="text" inputMode="decimal" value={form.advancePaid} onChange={(e) => setForm((prev) => ({ ...prev, advancePaid: e.target.value }))} />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.advancePaid}
+                    onChange={(e) => setForm((prev) => ({ ...prev, advancePaid: e.target.value }))}
+                    onBlur={() => setForm((prev) => ({ ...prev, advancePaid: format2(prev.advancePaid) }))}
+                  />
                 </label>
                 <label>
                   Payment Basis
@@ -473,7 +522,7 @@ export function ConsignmentsPage() {
                 </label>
                 <label>
                   Final Freight
-                  <input value={freightAmount.toFixed(2)} readOnly />
+                  <input className="numeric-input" value={freightAmount.toFixed(2)} readOnly />
                 </label>
                 <label className="consignment-wide">
                   Remarks
@@ -533,7 +582,7 @@ export function ConsignmentsPage() {
                   <td>
                     {findLocationName(r.fromLocationId, locations)} - {findLocationName(r.toLocationId, locations)}
                   </td>
-                  <td>Rs. {r.freightAmount.toFixed(2)}</td>
+                  <td className="numeric-cell">Rs. {r.freightAmount.toFixed(2)}</td>
                   <td>{r.status}</td>
                   <td>
                     <div className="consignment-table-actions">
@@ -568,6 +617,7 @@ export function ConsignmentsPage() {
 function emptyForm(): ConsignmentFormState {
   const today = new Date().toISOString().slice(0, 10)
   return {
+    consignmentNo: "",
     branchId: "",
     bookingDate: today,
     customerId: "",
@@ -588,13 +638,13 @@ function emptyForm(): ConsignmentFormState {
     actualWeight: "0.000",
     chargedWeight: "0.000",
     ratePerQuintal: "0",
-    basicFreight: "0",
-    stCharge: "0",
-    gstAmount: "0",
-    hamaliCharge: "0",
-    doorDeliveryCharge: "0",
-    advancePaid: "0",
-    collectionCharge: "0",
+    basicFreight: "0.00",
+    stCharge: "0.00",
+    gstAmount: "0.00",
+    hamaliCharge: "0.00",
+    doorDeliveryCharge: "0.00",
+    advancePaid: "0.00",
+    collectionCharge: "0.00",
     paymentBasis: "To Pay",
     invoiceNo: "",
     invoiceDate: "",
@@ -605,16 +655,27 @@ function emptyForm(): ConsignmentFormState {
 function validateConsignmentForm(
   form: ConsignmentFormState,
   fromLocationId: string | undefined,
-  toLocationId: string | undefined
+  toLocationId: string | undefined,
+  rows: Consignment[],
+  editingId: string | null
 ): Record<string, string> {
   const errors: Record<string, string> = {}
+  if (!form.consignmentNo.trim()) {
+    errors.consignmentNo = "Consignment number is mandatory."
+  } else if (
+    rows.some((x) => x.id !== editingId && x.consignmentNo.trim().toLowerCase() === form.consignmentNo.trim().toLowerCase())
+  ) {
+    errors.consignmentNo = "Consignment number already exists."
+  }
   if (!form.branchId) errors.branchId = "Branch is mandatory."
   if (!form.bookingDate) errors.bookingDate = "Booking date is mandatory."
   if (!form.customerId) errors.customerId = "Customer is mandatory."
   if (!form.vehicleNo.trim()) errors.vehicleNo = "Vehicle Number is mandatory."
   if (!form.consignorName.trim()) errors.consignorName = "Consignor is mandatory."
   if (!form.consigneeName.trim()) errors.consigneeName = "Consignee is mandatory."
-  if (toAmount(form.packages) * toAmount(form.ratePerQuintal) <= 0) errors.basicFreight = "Basic Freight should be greater than zero."
+  if ((toAmount(form.packages) * toAmount(form.ratePerQuintal) <= 0) && toAmount(form.basicFreight) <= 0) {
+    errors.basicFreight = "Basic Freight should be greater than zero."
+  }
   if (!fromLocationId) errors.fromLocationName = "Select a valid From location."
   if (!toLocationId) errors.toLocationName = "Select a valid To location."
   if (fromLocationId && toLocationId && fromLocationId === toLocationId) {
@@ -631,6 +692,7 @@ function toPayload(
   basicFreightCalculated: number
 ): ConsignmentUpsert {
   return {
+    consignmentNo: form.consignmentNo.trim() || undefined,
     branchId: form.branchId,
     bookingDate: form.bookingDate,
     customerId: form.customerId,
@@ -680,6 +742,10 @@ function format3(value: string): string {
   return toWeight(value).toFixed(3)
 }
 
+function format2(value: string): string {
+  return toAmount(value).toFixed(2)
+}
+
 function findCustomerByName(name: string, options: CustomerOption[]): CustomerOption | undefined {
   const needle = name.trim().toLowerCase()
   if (!needle) return undefined
@@ -704,4 +770,15 @@ function findLocationName(id: string, options: LocationOption[]): string {
 function toLocationRefValue(location: LocationOption | undefined): string {
   if (!location) return ""
   return `${location.code} - ${location.name}`
+}
+
+function nextDocumentNo(prefix: string, existingNos: string[]): string {
+  const year = new Date().getFullYear()
+  const start = `${prefix}/${year}/`
+  const seq = existingNos
+    .filter((no) => no.startsWith(start))
+    .map((no) => Number(no.slice(start.length)))
+    .filter((n) => Number.isFinite(n))
+  const next = (seq.length ? Math.max(...seq) : 0) + 1
+  return `${start}${String(next).padStart(5, "0")}`
 }

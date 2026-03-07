@@ -1,34 +1,34 @@
 :root {
   --font-ui: "Plus Jakarta Sans", "Segoe UI", Tahoma, sans-serif;
-  --bg-app: radial-gradient(circle at top right, #ffe082, #ffd166 34%, #fff5d6 62%);
-  --bg-shell: #fff6dc;
+  --bg-app: linear-gradient(180deg, #f7fafc 0%, #eef3f9 100%);
+  --bg-shell: #f3f7fd;
   --bg-card: #ffffff;
-  --bg-soft: #fff2cf;
-  --text-main: #1b2340;
-  --text-soft: #6b2744;
-  --border: #f0c46b;
-  --brand: #0c4ea3;
-  --brand-strong: #093b7b;
-  --accent-red: #b50f2f;
-  --accent-yellow: #e3ad27;
-  --accent-blue: #0c4ea3;
-  --surface-shadow: 0 16px 30px rgba(181, 15, 47, 0.12);
+  --bg-soft: #e9f0f8;
+  --text-main: #132033;
+  --text-soft: #44566c;
+  --border: #d2ddea;
+  --brand: #1f6fbf;
+  --brand-strong: #134a8a;
+  --accent-red: #c43737;
+  --accent-yellow: #5a94d6;
+  --accent-blue: #1f6fbf;
+  --surface-shadow: 0 14px 26px rgba(15, 23, 42, 0.12);
 }
 
 :root[data-theme="dark"] {
-  --bg-app: radial-gradient(circle at top right, #2f1b12, #241312 38%, #1a1010 70%);
-  --bg-shell: #2a1613;
-  --bg-card: #36211f;
-  --bg-soft: #492824;
-  --text-main: #fff4df;
-  --text-soft: #ffc3a9;
-  --border: #7f453b;
-  --brand: #5fa2ff;
-  --brand-strong: #9ec5ff;
-  --accent-red: #ff5b79;
-  --accent-yellow: #ffd56b;
-  --accent-blue: #67adff;
-  --surface-shadow: 0 20px 38px rgba(7, 4, 3, 0.5);
+  --bg-app: linear-gradient(180deg, #111827 0%, #0b1320 100%);
+  --bg-shell: #172234;
+  --bg-card: #1d2a3d;
+  --bg-soft: #243348;
+  --text-main: #f8fafc;
+  --text-soft: #d2deec;
+  --border: #3a4f69;
+  --brand: #67a8e8;
+  --brand-strong: #9ac6f1;
+  --accent-red: #e47878;
+  --accent-yellow: #6ea8de;
+  --accent-blue: #67a8e8;
+  --surface-shadow: 0 20px 38px rgba(2, 6, 23, 0.55);
 }
 
 * {
@@ -64,7 +64,7 @@ body {
   padding: 12px 18px;
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(10px);
-  background: linear-gradient(120deg, color-mix(in srgb, var(--accent-yellow) 46%, var(--bg-card)), var(--bg-card));
+  background: linear-gradient(120deg, color-mix(in srgb, var(--brand) 14%, var(--bg-card)), var(--bg-card));
 }
 
 .brand {
@@ -121,8 +121,8 @@ body {
 
 .sidebar-toggle-btn.active {
   color: #ffffff;
-  border-color: color-mix(in srgb, var(--accent-red) 60%, var(--accent-blue));
-  background: linear-gradient(125deg, var(--accent-red), var(--accent-blue));
+  border-color: color-mix(in srgb, var(--brand-strong) 65%, var(--brand));
+  background: linear-gradient(125deg, var(--brand-strong), var(--brand));
 }
 
 .app-body {
@@ -142,15 +142,15 @@ body {
 .sidebar {
   border-right: 1px solid var(--border);
   padding: 18px 12px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-blue) 8%, var(--bg-shell)), var(--bg-shell));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--bg-shell)), var(--bg-shell));
   overflow-y: auto;
 }
 
 .nav-accordion {
   margin-bottom: 10px;
-  border: 1px solid color-mix(in srgb, var(--accent-yellow) 45%, var(--border));
+  border: 1px solid color-mix(in srgb, var(--brand) 35%, var(--border));
   border-radius: 12px;
-  background: color-mix(in srgb, var(--bg-card) 88%, var(--accent-yellow));
+  background: color-mix(in srgb, var(--bg-card) 92%, var(--brand));
   overflow: hidden;
 }
 
@@ -205,8 +205,8 @@ body {
 
 .nav-item.active {
   color: #ffffff;
-  background: linear-gradient(125deg, var(--accent-red), var(--accent-blue));
-  border-color: color-mix(in srgb, var(--accent-red) 60%, var(--accent-blue));
+  background: linear-gradient(125deg, var(--brand-strong), var(--brand));
+  border-color: color-mix(in srgb, var(--brand-strong) 60%, var(--brand));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
@@ -263,8 +263,8 @@ body {
 }
 
 .user-box button {
-  border: 1px solid color-mix(in srgb, #7f1d1d 35%, var(--border));
-  background: linear-gradient(130deg, #b91c1c, #dc2626);
+  border: 1px solid color-mix(in srgb, var(--accent-red) 50%, var(--border));
+  background: linear-gradient(130deg, #a62424, var(--accent-red));
   color: #fff;
   padding: 7px 11px;
   border-radius: 10px;
@@ -284,7 +284,7 @@ body {
 }
 
 .panel {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 92%, var(--accent-yellow)), var(--bg-card));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 98%, var(--brand)), var(--bg-card));
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px;
@@ -305,7 +305,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
-  background: linear-gradient(130deg, color-mix(in srgb, var(--accent-yellow) 36%, var(--bg-soft)), var(--bg-soft));
+  background: linear-gradient(130deg, color-mix(in srgb, var(--brand) 18%, var(--bg-soft)), var(--bg-soft));
 }
 
 .kpi span {
@@ -432,7 +432,7 @@ thead th {
 }
 
 .btn-primary {
-  background: linear-gradient(130deg, var(--accent-red), var(--brand));
+  background: linear-gradient(130deg, #a62424, var(--accent-red));
   color: #ffffff;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
@@ -520,8 +520,8 @@ thead th {
 
 .tab-btn.active {
   color: #ffffff;
-  background: linear-gradient(130deg, var(--accent-red), var(--accent-blue));
-  border-color: color-mix(in srgb, var(--accent-red) 50%, var(--accent-blue));
+  background: linear-gradient(130deg, var(--brand-strong), var(--brand));
+  border-color: color-mix(in srgb, var(--brand-strong) 55%, var(--brand));
 }
 
 .module-form {
@@ -810,6 +810,32 @@ input[inputmode="numeric"],
   min-width: 260px;
 }
 
+.report-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.report-filters label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.date-range-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  grid-column: span 2;
+}
+
+.date-range-picker label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 900px) {
   .app-body {
     grid-template-columns: 1fr;
@@ -843,6 +869,14 @@ input[inputmode="numeric"],
 
   .lorry-hire-row {
     grid-template-columns: 1fr;
+  }
+
+  .report-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .date-range-picker {
+    grid-column: span 2;
   }
 
   .lorry-lines-table input,

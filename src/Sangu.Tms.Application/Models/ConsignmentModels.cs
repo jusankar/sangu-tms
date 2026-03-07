@@ -2,6 +2,7 @@ namespace Sangu.Tms.Application.Models;
 
 public sealed class ConsignmentUpsertModel
 {
+    public string? ConsignmentNo { get; set; }
     public Guid BranchId { get; set; }
     public DateOnly BookingDate { get; set; }
     public Guid CustomerId { get; set; }
