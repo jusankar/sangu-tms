@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{067E4CF3-F174-4603-B924-E81D2175F6F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sangu.Tms.Api", "src\Sangu.Tms.Api\Sangu.Tms.Api.csproj", "{D4EF797E-DDE0-4660-AB58-85C68E058372}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sangu.Tms.Application", "src\Sangu.Tms.Application\Sangu.Tms.Application.csproj", "{8B332DD4-B1D9-4C08-A0D7-241CB5BDB063}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sangu.Tms.Domain", "src\Sangu.Tms.Domain\Sangu.Tms.Domain.csproj", "{6E3B7183-2DB5-42FD-8EDC-93D4F42F82B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sangu.Tms.Infrastructure", "src\Sangu.Tms.Infrastructure\Sangu.Tms.Infrastructure.csproj", "{6D99DDD5-9042-4929-B490-1932804A713F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D4EF797E-DDE0-4660-AB58-85C68E058372}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4EF797E-DDE0-4660-AB58-85C68E058372}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4EF797E-DDE0-4660-AB58-85C68E058372}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4EF797E-DDE0-4660-AB58-85C68E058372}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B332DD4-B1D9-4C08-A0D7-241CB5BDB063}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B332DD4-B1D9-4C08-A0D7-241CB5BDB063}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B332DD4-B1D9-4C08-A0D7-241CB5BDB063}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B332DD4-B1D9-4C08-A0D7-241CB5BDB063}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E3B7183-2DB5-42FD-8EDC-93D4F42F82B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E3B7183-2DB5-42FD-8EDC-93D4F42F82B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E3B7183-2DB5-42FD-8EDC-93D4F42F82B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E3B7183-2DB5-42FD-8EDC-93D4F42F82B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D99DDD5-9042-4929-B490-1932804A713F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D99DDD5-9042-4929-B490-1932804A713F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D99DDD5-9042-4929-B490-1932804A713F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D99DDD5-9042-4929-B490-1932804A713F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D4EF797E-DDE0-4660-AB58-85C68E058372} = {067E4CF3-F174-4603-B924-E81D2175F6F0}
+		{8B332DD4-B1D9-4C08-A0D7-241CB5BDB063} = {067E4CF3-F174-4603-B924-E81D2175F6F0}
+		{6E3B7183-2DB5-42FD-8EDC-93D4F42F82B0} = {067E4CF3-F174-4603-B924-E81D2175F6F0}
+		{6D99DDD5-9042-4929-B490-1932804A713F} = {067E4CF3-F174-4603-B924-E81D2175F6F0}
+	EndGlobalSection
+EndGlobal

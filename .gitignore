@@ -1,0 +1,49 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editors
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+.history/
+*.swp
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/.env.local
+frontend/.env.*.local
+frontend/.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# .NET
+**/bin/
+**/obj/
+.nuget/
+.dotnet/
+.user/
+.user+/
+.npm-cache/
+
+# Build / runtime outputs
+*.log
+*.pid
+*.tmp
+*.tmp.*
+_docx_extract/
+_tmp_doc.zip
+.tmpbuild/
+
+# Docker
+**/.docker/
+

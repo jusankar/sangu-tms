@@ -1,0 +1,50 @@
+services:
+  booking-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        PROJECT_PATH: src/Sangu.Tms.BookingService/Sangu.Tms.BookingService.csproj
+        SERVICE_DLL: Sangu.Tms.BookingService.dll
+    ports:
+      - "5001:5000"
+
+  billing-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        PROJECT_PATH: src/Sangu.Tms.BillingService/Sangu.Tms.BillingService.csproj
+        SERVICE_DLL: Sangu.Tms.BillingService.dll
+    ports:
+      - "5002:5000"
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        PROJECT_PATH: src/Sangu.Tms.PaymentService/Sangu.Tms.PaymentService.csproj
+        SERVICE_DLL: Sangu.Tms.PaymentService.dll
+    ports:
+      - "5003:5000"
+
+  master-data-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        PROJECT_PATH: src/Sangu.Tms.MasterDataService/Sangu.Tms.MasterDataService.csproj
+        SERVICE_DLL: Sangu.Tms.MasterDataService.dll
+    ports:
+      - "5004:5000"
+
+  reporting-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        PROJECT_PATH: src/Sangu.Tms.ReportingService/Sangu.Tms.ReportingService.csproj
+        SERVICE_DLL: Sangu.Tms.ReportingService.dll
+    ports:
+      - "5005:5000"

@@ -1,0 +1,366 @@
+openapi: 3.0.3
+info:
+  title: Sangu TMS API
+  version: 1.0.0
+  description: Phase 1 contract for auth, operations, reports, and license checks.
+servers:
+  - url: https://api.sangutms.com
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: New access token
+
+  /license/status:
+    get:
+      tags: [License]
+      responses:
+        '200':
+          description: License and quota status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseStatus'
+
+  /consignments:
+    get:
+      tags: [Consignments]
+      parameters:
+        - in: query
+          name: fromDate
+          schema: { type: string, format: date }
+        - in: query
+          name: toDate
+          schema: { type: string, format: date }
+        - in: query
+          name: customerId
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: List consignments
+    post:
+      tags: [Consignments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsignmentCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consignment'
+
+  /consignments/{id}:
+    get:
+      tags: [Consignments]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Single consignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consignment'
+    put:
+      tags: [Consignments]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsignmentCreate'
+      responses:
+        '200':
+          description: Updated
+
+  /challans:
+    get:
+      tags: [Challans]
+      responses:
+        '200':
+          description: List challans
+    post:
+      tags: [Challans]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChallanCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Challan'
+
+  /challans/{id}/payments:
+    post:
+      tags: [Lorry Payments]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LorryPaymentCreate'
+      responses:
+        '201':
+          description: Payment entry created
+
+  /invoices:
+    get:
+      tags: [Invoices]
+      responses:
+        '200':
+          description: List invoices
+    post:
+      tags: [Invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+
+  /invoices/{id}/print:
+    get:
+      tags: [Invoices]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Invoice printable payload
+
+  /invoices/{id}/receipts:
+    post:
+      tags: [Money Receipts]
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoneyReceiptCreate'
+      responses:
+        '201':
+          description: Receipt posted
+
+  /reports/booking:
+    get:
+      tags: [Reports]
+      responses:
+        '200':
+          description: Booking report rows
+
+  /reports/lorry-payments:
+    get:
+      tags: [Reports]
+      responses:
+        '200':
+          description: Lorry payment report rows
+
+  /reports/outstanding:
+    get:
+      tags: [Reports]
+      responses:
+        '200':
+          description: Outstanding report rows
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        tenantCode: { type: string }
+
+    LoginResponse:
+      type: object
+      required: [accessToken, refreshToken, user]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        user:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            fullName: { type: string }
+            isAdmin: { type: boolean }
+            permissions:
+              type: array
+              items: { type: string }
+
+    LicenseStatus:
+      type: object
+      properties:
+        planCode: { type: string }
+        subscriptionStatus: { type: string }
+        consignmentsUsed: { type: integer }
+        consignmentsLimit: { type: integer }
+        canCreateConsignment: { type: boolean }
+        graceEndDate: { type: string, format: date }
+
+    ConsignmentCreate:
+      type: object
+      required:
+        - branchId
+        - bookingDate
+        - customerId
+        - fromLocationId
+        - toLocationId
+      properties:
+        branchId: { type: string, format: uuid }
+        bookingDate: { type: string, format: date }
+        customerId: { type: string, format: uuid }
+        fromLocationId: { type: string, format: uuid }
+        toLocationId: { type: string, format: uuid }
+        goodsDescription: { type: string }
+        quantity: { type: number }
+        weightKg: { type: number }
+        freightAmount: { type: number }
+        remarks: { type: string }
+
+    Consignment:
+      allOf:
+        - $ref: '#/components/schemas/ConsignmentCreate'
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            consignmentNo: { type: string }
+            status: { type: string }
+
+    ChallanCreate:
+      type: object
+      required: [branchId, challanDate, consignmentId]
+      properties:
+        branchId: { type: string, format: uuid }
+        challanDate: { type: string, format: date }
+        consignmentId: { type: string, format: uuid }
+        vehicleNo: { type: string }
+        driverName: { type: string }
+        driverMobile: { type: string }
+        totalHire: { type: number }
+
+    Challan:
+      allOf:
+        - $ref: '#/components/schemas/ChallanCreate'
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            challanNo: { type: string }
+            status: { type: string }
+
+    LorryPaymentCreate:
+      type: object
+      required: [paymentDate, paymentType, amount, mode]
+      properties:
+        paymentDate: { type: string, format: date }
+        paymentType: { type: string, enum: [part, balance] }
+        amount: { type: number }
+        mode: { type: string, enum: [cash, bank, upi] }
+        referenceNo: { type: string }
+        notes: { type: string }
+
+    InvoiceCreate:
+      type: object
+      required: [branchId, invoiceDate, consignmentId]
+      properties:
+        branchId: { type: string, format: uuid }
+        invoiceDate: { type: string, format: date }
+        consignmentId: { type: string, format: uuid }
+        challanIds:
+          type: array
+          items: { type: string, format: uuid }
+        taxableAmount: { type: number }
+        gstAmount: { type: number }
+        totalAmount: { type: number }
+        dueDate: { type: string, format: date }
+
+    Invoice:
+      allOf:
+        - $ref: '#/components/schemas/InvoiceCreate'
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            invoiceNo: { type: string }
+            status: { type: string }
+
+    MoneyReceiptCreate:
+      type: object
+      required: [branchId, receiptDate, amount, mode]
+      properties:
+        branchId: { type: string, format: uuid }
+        receiptDate: { type: string, format: date }
+        amount: { type: number }
+        mode: { type: string, enum: [cash, bank, upi] }
+        referenceNo: { type: string }
+
