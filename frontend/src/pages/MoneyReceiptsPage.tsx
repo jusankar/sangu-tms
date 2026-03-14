@@ -1,7 +1,22 @@
 import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
+import { Button } from "../components/ui/button"
+import { DatePicker } from "../components/ui/date-picker"
+import { FormField } from "../components/ui/form-field"
+import { Input } from "../components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select"
+import { Tabs, TabsTrigger } from "../components/ui/tabs"
+import { Textarea } from "../components/ui/textarea"
+import { TypeaheadInput } from "../components/ui/typeahead-input"
 import { TablePagination } from "../components/TablePagination"
 import { api } from "../lib/api"
+import { formatDate } from "../lib/reporting"
 import type { Branch, Consignment, Customer, Invoice, MoneyReceipt } from "../types"
 
 type TabKey = "form" | "list"
@@ -188,17 +203,17 @@ export function MoneyReceiptsPage() {
           <p>Post customer receipts against one or more invoices with deductions.</p>
         </div>
         <div className="consignment-actions">
-          <div className="page-tabs">
-            <button className={tab === "form" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("form")} type="button">
+          <Tabs>
+            <TabsTrigger active={tab === "form"} onClick={() => setTab("form")}>
               Form
-            </button>
-            <button className={tab === "list" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("list")} type="button">
+            </TabsTrigger>
+            <TabsTrigger active={tab === "list"} onClick={() => setTab("list")}>
               Listing
-            </button>
-          </div>
-          <button className="btn-secondary" onClick={() => void loadAll()} type="button">
+            </TabsTrigger>
+          </Tabs>
+          <Button variant="outline" size="sm" onClick={() => void loadAll()} type="button">
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -211,81 +226,61 @@ export function MoneyReceiptsPage() {
             <fieldset className="consignment-wide">
               <legend>Receipt Header</legend>
               <div className="consignment-fields">
-                <label>
-                  <span className="label-text">
-                    Receipt No<sup className="required">*</sup>
-                  </span>
-                  <input value={form.receiptNo} onChange={(e) => setForm((prev) => ({ ...prev, receiptNo: e.target.value }))} />
-                  {fieldErrors.receiptNo ? <small className="error-text">{fieldErrors.receiptNo}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Branch<sup className="required">*</sup>
-                  </span>
-                  <select value={form.branchId} onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value }))}>
-                    <option value="">Select branch...</option>
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.code} - {branch.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span className="label-text">
-                    Date<sup className="required">*</sup>
-                  </span>
-                  <input type="date" value={form.receiptDate} onChange={(e) => setForm((prev) => ({ ...prev, receiptDate: e.target.value }))} />
-                </label>
-                <label>
-                  <span className="label-text">
-                    Customer<sup className="required">*</sup>
-                  </span>
-                  <input list="customer-options" value={form.customerName} onChange={(e) => onCustomerChange(e.target.value)} />
-                  {fieldErrors.customerName ? <small className="error-text">{fieldErrors.customerName}</small> : null}
-                </label>
-                <label>
-                  Customer Mobile
-                  <input value={form.customerMobile} onChange={(e) => setForm((prev) => ({ ...prev, customerMobile: e.target.value }))} />
-                </label>
-                <label className="consignment-wide">
-                  Customer Address
-                  <textarea value={form.customerAddress} onChange={(e) => setForm((prev) => ({ ...prev, customerAddress: e.target.value }))} />
-                </label>
-                <label>
-                  Payment Mode
-                  <select value={form.mode} onChange={(e) => setForm((prev) => ({ ...prev, mode: e.target.value as FormState["mode"] }))}>
-                    <option value="cash">Cash</option>
-                    <option value="cheque">Cheque</option>
-                    <option value="dd">DD</option>
-                    <option value="online">Online</option>
-                    <option value="upi">UPI</option>
-                  </select>
-                </label>
-                <label>
-                  Reference No
-                  <input value={form.referenceNo} onChange={(e) => setForm((prev) => ({ ...prev, referenceNo: e.target.value }))} />
-                </label>
-                <label>
-                  Cheque/DD Date
-                  <input type="date" value={form.chequeDate} onChange={(e) => setForm((prev) => ({ ...prev, chequeDate: e.target.value }))} />
-                </label>
-                <label>
-                  Drawn On (Bank)
-                  <input value={form.drawnOn} onChange={(e) => setForm((prev) => ({ ...prev, drawnOn: e.target.value }))} />
-                </label>
-                <label>
-                  <span className="label-text">
-                    Received Amount<sup className="required">*</sup>
-                  </span>
-                  <input
-                    className="numeric-input"
-                    value={form.receivedAmount}
-                    onChange={(e) => setForm((prev) => ({ ...prev, receivedAmount: e.target.value }))}
-                    onBlur={() => setForm((prev) => ({ ...prev, receivedAmount: toAmount(prev.receivedAmount).toFixed(2) }))}
-                  />
-                  {fieldErrors.receivedAmount ? <small className="error-text">{fieldErrors.receivedAmount}</small> : null}
-                </label>
+                <FormField label="Receipt No" required error={fieldErrors.receiptNo}>
+                  <Input value={form.receiptNo} onChange={(e) => setForm((prev) => ({ ...prev, receiptNo: e.target.value }))} />
+                </FormField>
+                <FormField label="Branch" required>
+                  <Select value={form.branchId} onValueChange={(v) => setForm((prev) => ({ ...prev, branchId: v }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select branch..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.code} - {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Date" required>
+                  <DatePicker value={form.receiptDate} onChange={(value) => setForm((prev) => ({ ...prev, receiptDate: value }))} />
+                </FormField>
+                <FormField label="Customer" required error={fieldErrors.customerName}>
+                  <TypeaheadInput listId="customer-options" options={customers.map((c) => c.name)} value={form.customerName} onChange={(e) => onCustomerChange(e.target.value)} />
+                </FormField>
+                <FormField label="Customer Mobile">
+                  <Input value={form.customerMobile} onChange={(e) => setForm((prev) => ({ ...prev, customerMobile: e.target.value }))} />
+                </FormField>
+                <FormField label="Customer Address" fullWidth>
+                  <Textarea value={form.customerAddress} onChange={(e) => setForm((prev) => ({ ...prev, customerAddress: e.target.value }))} />
+                </FormField>
+                <FormField label="Payment Mode">
+                  <Select value={form.mode} onValueChange={(v) => setForm((prev) => ({ ...prev, mode: v as FormState["mode"] }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                      <SelectItem value="dd">DD</SelectItem>
+                      <SelectItem value="online">Online</SelectItem>
+                      <SelectItem value="upi">UPI</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Reference No">
+                  <Input value={form.referenceNo} onChange={(e) => setForm((prev) => ({ ...prev, referenceNo: e.target.value }))} />
+                </FormField>
+                <FormField label="Cheque/DD Date">
+                  <DatePicker value={form.chequeDate} onChange={(value) => setForm((prev) => ({ ...prev, chequeDate: value }))} />
+                </FormField>
+                <FormField label="Drawn On (Bank)">
+                  <Input value={form.drawnOn} onChange={(e) => setForm((prev) => ({ ...prev, drawnOn: e.target.value }))} />
+                </FormField>
+                <FormField label="Received Amount" required error={fieldErrors.receivedAmount}>
+                  <Input className="text-right" value={form.receivedAmount} onChange={(e) => setForm((prev) => ({ ...prev, receivedAmount: e.target.value }))} onBlur={() => setForm((prev) => ({ ...prev, receivedAmount: toAmount(prev.receivedAmount).toFixed(2) }))} />
+                </FormField>
               </div>
             </fieldset>
           </div>
@@ -312,51 +307,31 @@ export function MoneyReceiptsPage() {
                   return (
                     <tr key={`mr-line-${idx}`}>
                       <td>
-                        <input list="invoice-no-options" value={line.invoiceNo} onChange={(e) => onInvoiceChange(idx, e.target.value)} />
+                        <TypeaheadInput listId={`mr-inv-${idx}`} options={invoices.map((i) => i.invoiceNo)} value={line.invoiceNo} onChange={(e) => onInvoiceChange(idx, e.target.value)} className="w-full" />
                       </td>
                       <td>
-                        <input value={line.consignmentNo} onChange={(e) => updateLine(idx, { consignmentNo: e.target.value })} />
+                        <Input className="w-full" value={line.consignmentNo} onChange={(e) => updateLine(idx, { consignmentNo: e.target.value })} />
                       </td>
                       <td>
-                        <input className="lr-col-wide" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
+                        <Input className="lr-col-wide w-full" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
                       </td>
                       <td>
-                        <input
-                          className="numeric-input"
-                          value={line.weight}
-                          onChange={(e) => updateLine(idx, { weight: e.target.value })}
-                          onBlur={() => updateLine(idx, { weight: toWeight(line.weight).toFixed(3) })}
-                        />
+                        <Input className="text-right w-full" value={line.weight} onChange={(e) => updateLine(idx, { weight: e.target.value })} onBlur={() => updateLine(idx, { weight: toWeight(line.weight).toFixed(3) })} />
                       </td>
                       <td>
-                        <input
-                          className="numeric-input"
-                          value={line.rate}
-                          onChange={(e) => updateLine(idx, { rate: e.target.value })}
-                          onBlur={() => updateLine(idx, { rate: toAmount(line.rate).toFixed(2) })}
-                        />
+                        <Input className="text-right w-full" value={line.rate} onChange={(e) => updateLine(idx, { rate: e.target.value })} onBlur={() => updateLine(idx, { rate: toAmount(line.rate).toFixed(2) })} />
                       </td>
                       <td>
-                        <input
-                          className="numeric-input"
-                          value={line.amount}
-                          onChange={(e) => updateLine(idx, { amount: e.target.value })}
-                          onBlur={() => updateLine(idx, { amount: toAmount(line.amount).toFixed(2) })}
-                        />
+                        <Input className="text-right w-full" value={line.amount} onChange={(e) => updateLine(idx, { amount: e.target.value })} onBlur={() => updateLine(idx, { amount: toAmount(line.amount).toFixed(2) })} />
                       </td>
                       <td>
-                        <input
-                          className="numeric-input"
-                          value={line.deduction}
-                          onChange={(e) => updateLine(idx, { deduction: e.target.value })}
-                          onBlur={() => updateLine(idx, { deduction: toAmount(line.deduction).toFixed(2) })}
-                        />
+                        <Input className="text-right w-full" value={line.deduction} onChange={(e) => updateLine(idx, { deduction: e.target.value })} onBlur={() => updateLine(idx, { deduction: toAmount(line.deduction).toFixed(2) })} />
                       </td>
                       <td className="numeric-cell">{payable.toFixed(2)}</td>
                       <td>
-                        <button className="btn-danger" type="button" onClick={() => removeLine(idx)}>
+                        <Button variant="destructive" size="sm" type="button" onClick={() => removeLine(idx)}>
                           Remove
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   )
@@ -375,30 +350,19 @@ export function MoneyReceiptsPage() {
             {fieldErrors.lines ? <small className="error-text">{fieldErrors.lines}</small> : null}
             {fieldErrors.amountMatch ? <small className="error-text">{fieldErrors.amountMatch}</small> : null}
             <div style={{ marginTop: 10 }}>
-              <button className="btn-secondary" type="button" onClick={addLine}>
+              <Button variant="outline" size="sm" type="button" onClick={addLine}>
                 Add Line
-              </button>
+              </Button>
             </div>
           </fieldset>
 
-          <datalist id="invoice-no-options">
-            {invoices.map((invoice) => (
-              <option key={invoice.id} value={invoice.invoiceNo} />
-            ))}
-          </datalist>
-          <datalist id="customer-options">
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.name} />
-            ))}
-          </datalist>
-
           <div className="consignment-actions" style={{ marginTop: 12 }}>
-            <button className="btn-primary" type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading}>
               Post Money Receipt
-            </button>
-            <button className="btn-secondary" type="button" onClick={onReset}>
+            </Button>
+            <Button variant="outline" type="button" onClick={onReset}>
               Clear
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -419,7 +383,7 @@ export function MoneyReceiptsPage() {
               {pagedRows.map((row) => (
                 <tr key={row.id}>
                   <td>{row.receiptNo}</td>
-                  <td>{row.receiptDate}</td>
+                  <td>{formatDate(row.receiptDate)}</td>
                   <td>{findInvoiceNoById(row.invoiceId, invoices) || "-"}</td>
                   <td>{row.mode}</td>
                   <td>{row.referenceNo || "-"}</td>

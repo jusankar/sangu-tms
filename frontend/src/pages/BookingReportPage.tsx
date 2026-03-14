@@ -1,4 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
+import { Button } from "../components/ui/button"
+import { FormField } from "../components/ui/form-field"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select"
 import { TablePagination } from "../components/TablePagination"
 import { DateRangePicker } from "../components/ui/DateRangePicker"
 import { api } from "../lib/api"
@@ -10,8 +19,8 @@ export function BookingReportPage() {
   const [branches, setBranches] = useState<Branch[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [locations, setLocations] = useState<Location[]>([])
-  const [branchId, setBranchId] = useState("")
-  const [customerId, setCustomerId] = useState("")
+  const [branchId, setBranchId] = useState("__all__")
+  const [customerId, setCustomerId] = useState("__all__")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
   const [error, setError] = useState("")
@@ -43,8 +52,8 @@ export function BookingReportPage() {
   const filteredRows = useMemo(
     () =>
       rows.filter((row) => {
-        if (branchId && row.branchId !== branchId) return false
-        if (customerId && row.customerId !== customerId) return false
+        if (branchId && branchId !== "__all__" && row.branchId !== branchId) return false
+        if (customerId && customerId !== "__all__" && row.customerId !== customerId) return false
         if (fromDate && row.bookingDate < fromDate) return false
         if (toDate && row.bookingDate > toDate) return false
         return true
@@ -60,8 +69,8 @@ export function BookingReportPage() {
       filters: [
         { label: "Branch", value: findBranchName(branchId, branches) || "All" },
         { label: "Customer", value: findCustomerName(customerId, customers) || "All" },
-        { label: "From Date", value: fromDate || "All" },
-        { label: "To Date", value: toDate || "All" },
+        { label: "From Date", value: fromDate ? formatDate(fromDate) : "All" },
+        { label: "To Date", value: toDate ? formatDate(toDate) : "All" },
       ],
       columns: [
         { title: "Sl", value: (_, i) => String(i + 1), align: "right" },
@@ -87,31 +96,39 @@ export function BookingReportPage() {
           <p>Filter bookings and download/print as PDF.</p>
         </div>
         <div className="consignment-actions">
-          <button className="btn-secondary" type="button" onClick={loadAll}>Refresh</button>
-          <button className="btn-primary" type="button" onClick={onPrint}>Download / Print PDF</button>
+          <Button variant="outline" size="sm" type="button" onClick={loadAll}>Refresh</Button>
+          <Button type="button" onClick={onPrint}>Download / Print PDF</Button>
         </div>
       </div>
       {error ? <div className="error">{error}</div> : null}
 
       <div className="report-filters">
-        <label>
-          Branch
-          <select value={branchId} onChange={(e) => { setBranchId(e.target.value); setPage(1) }}>
-            <option value="">Select branch...</option>
-            {branches.map((row) => (
-              <option key={row.id} value={row.id}>{row.code} - {row.name}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Customer
-          <select value={customerId} onChange={(e) => { setCustomerId(e.target.value); setPage(1) }}>
-            <option value="">Select customer...</option>
-            {customers.map((row) => (
-              <option key={row.id} value={row.id}>{row.code} - {row.name}</option>
-            ))}
-          </select>
-        </label>
+        <FormField label="Branch">
+          <Select value={branchId} onValueChange={(v) => { setBranchId(v); setPage(1) }}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All</SelectItem>
+              {branches.map((row) => (
+                <SelectItem key={row.id} value={row.id}>{row.code} - {row.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+        <FormField label="Customer">
+          <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setPage(1) }}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All customers" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All</SelectItem>
+              {customers.map((row) => (
+                <SelectItem key={row.id} value={row.id}>{row.code} - {row.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
         <DateRangePicker
           from={fromDate}
           to={toDate}
@@ -149,7 +166,7 @@ export function BookingReportPage() {
               <td className="numeric-cell">{(page - 1) * pageSize + index + 1}</td>
               <td>{findBranchCodeName(row.branchId, branches)}</td>
               <td>{row.consignmentNo}</td>
-              <td>{row.bookingDate}</td>
+              <td>{formatDate(row.bookingDate)}</td>
               <td>{findCustomerName(row.customerId, customers) || "-"}</td>
               <td>{row.consignorName || "-"}</td>
               <td>{row.consigneeName || "-"}</td>

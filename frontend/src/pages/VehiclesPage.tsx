@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react"
 import type { FormEvent } from "react"
+import { Button } from "../components/ui/button"
+import { FormField } from "../components/ui/form-field"
+import { Input } from "../components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select"
+import { Tabs, TabsTrigger } from "../components/ui/tabs"
 import { TablePagination } from "../components/TablePagination"
 import { api } from "../lib/api"
 import type { Vehicle } from "../types"
@@ -110,14 +121,14 @@ export function VehiclesPage() {
     <section className="panel consignment-layout">
       <div className="consignment-toolbar">
         <h2>Vehicles</h2>
-        <div className="page-tabs">
-          <button className={tab === "form" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("form")} type="button">
+        <Tabs>
+          <TabsTrigger active={tab === "form"} onClick={() => setTab("form")}>
             Form
-          </button>
-          <button className={tab === "list" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("list")} type="button">
+          </TabsTrigger>
+          <TabsTrigger active={tab === "list"} onClick={() => setTab("list")}>
             Listing
-          </button>
-        </div>
+          </TabsTrigger>
+        </Tabs>
       </div>
 
       {error ? <div className="error">{error}</div> : null}
@@ -125,43 +136,39 @@ export function VehiclesPage() {
 
       {tab === "form" ? (
         <form className="module-form" onSubmit={onSubmit}>
-          <label>
-            <span className="label-text">
-              Vehicle Number<sup className="required">*</sup>
-            </span>
-            <input required value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} />
-            {fieldErrors.vehicleNumber ? <small className="error-text">{fieldErrors.vehicleNumber}</small> : null}
-          </label>
-          <label>
-            Make
-            <input value={make} onChange={(e) => setMake(e.target.value)} />
-          </label>
-          <label>
-            Type
-            <input value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} />
-          </label>
-          <label>
-            Chassis Number
-            <input value={chassisNumber} onChange={(e) => setChassisNumber(e.target.value)} />
-          </label>
-          <label>
-            Engine Number
-            <input value={engineNumber} onChange={(e) => setEngineNumber(e.target.value)} />
-          </label>
-          <label>
-            Active
-            <select value={isActive ? "true" : "false"} onChange={(e) => setIsActive(e.target.value === "true")}>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-          </label>
+          <FormField label="Vehicle Number" required error={fieldErrors.vehicleNumber}>
+            <Input value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} />
+          </FormField>
+          <FormField label="Make">
+            <Input value={make} onChange={(e) => setMake(e.target.value)} />
+          </FormField>
+          <FormField label="Type">
+            <Input value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} />
+          </FormField>
+          <FormField label="Chassis Number">
+            <Input value={chassisNumber} onChange={(e) => setChassisNumber(e.target.value)} />
+          </FormField>
+          <FormField label="Engine Number">
+            <Input value={engineNumber} onChange={(e) => setEngineNumber(e.target.value)} />
+          </FormField>
+          <FormField label="Active">
+            <Select value={isActive ? "true" : "false"} onValueChange={(v) => setIsActive(v === "true")}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">Yes</SelectItem>
+                <SelectItem value="false">No</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
           <div className="module-form-actions">
-            <button className="btn-primary" type="submit">
+            <Button type="submit">
               {editingId ? "Update Vehicle" : "Create Vehicle"}
-            </button>
-            <button className="btn-secondary" onClick={onReset} type="button">
+            </Button>
+            <Button variant="outline" onClick={onReset} type="button">
               Clear
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -189,12 +196,12 @@ export function VehiclesPage() {
                   <td>{r.isActive ? "Yes" : "No"}</td>
                   <td>
                     <div className="consignment-table-actions">
-                      <button className="btn-secondary" onClick={() => onEdit(r)} type="button">
+                      <Button variant="outline" size="sm" onClick={() => onEdit(r)} type="button">
                         Edit
-                      </button>
-                      <button className="btn-danger" onClick={() => void onDelete(r.id)} type="button">
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => void onDelete(r.id)} type="button">
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

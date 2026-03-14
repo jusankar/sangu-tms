@@ -1,3 +1,5 @@
+import { format, parseISO } from "date-fns"
+
 export type ReportColumn<T> = {
   title: string
   value: (row: T, index: number) => string | number
@@ -18,7 +20,10 @@ export function formatMoney(value: number): string {
 }
 
 export function formatDate(value: string): string {
-  return value || "-"
+  if (!value) return "-"
+  const parsed = parseISO(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return format(parsed, "dd MMM yyyy")
 }
 
 export function printReportPdf<T>(params: {

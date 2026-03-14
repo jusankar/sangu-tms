@@ -1,7 +1,22 @@
 import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
+import { Button } from "../components/ui/button"
+import { DatePicker } from "../components/ui/date-picker"
+import { FormField } from "../components/ui/form-field"
+import { Input } from "../components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select"
+import { Tabs, TabsTrigger } from "../components/ui/tabs"
+import { Textarea } from "../components/ui/textarea"
+import { TypeaheadInput } from "../components/ui/typeahead-input"
 import { TablePagination } from "../components/TablePagination"
 import { api } from "../lib/api"
+import { formatDate } from "../lib/reporting"
 import type { Consignment, ConsignmentUpsert, Vehicle } from "../types"
 
 type BranchOption = { id: string; code: string; name: string; address?: string; isActive: boolean }
@@ -247,17 +262,17 @@ export function ConsignmentsPage() {
           <p>Create, update, review and delete consignments from one screen.</p>
         </div>
         <div className="consignment-actions">
-          <div className="page-tabs">
-            <button className={tab === "form" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("form")} type="button">
+          <Tabs>
+            <TabsTrigger active={tab === "form"} onClick={() => setTab("form")}>
               Form
-            </button>
-            <button className={tab === "list" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("list")} type="button">
+            </TabsTrigger>
+            <TabsTrigger active={tab === "list"} onClick={() => setTab("list")}>
               Listing
-            </button>
-          </div>
-          <button className="btn-secondary" onClick={() => void loadAll()} type="button">
+            </TabsTrigger>
+          </Tabs>
+          <Button variant="outline" size="sm" onClick={() => void loadAll()} type="button">
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -270,291 +285,309 @@ export function ConsignmentsPage() {
             <fieldset>
               <legend>Booking And Parties</legend>
               <div className="consignment-fields">
-                <label>
-                  <span className="label-text">
-                    Consignment No<sup className="required">*</sup>
-                  </span>
-                  <input value={form.consignmentNo} onChange={(e) => setForm((prev) => ({ ...prev, consignmentNo: e.target.value }))} />
-                  {fieldErrors.consignmentNo ? <small className="error-text">{fieldErrors.consignmentNo}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Branch<sup className="required">*</sup>
-                  </span>
-                  <select value={form.branchId} onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value }))}>
-                    <option value="">Select branch...</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.code} - {b.name}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.branchId ? <small className="error-text">{fieldErrors.branchId}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Booking Date<sup className="required">*</sup>
-                  </span>
-                  <input type="date" value={form.bookingDate} onChange={(e) => setForm((prev) => ({ ...prev, bookingDate: e.target.value }))} />
-                  {fieldErrors.bookingDate ? <small className="error-text">{fieldErrors.bookingDate}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Customer<sup className="required">*</sup>
-                  </span>
-                  <select value={form.customerId} onChange={(e) => setForm((prev) => ({ ...prev, customerId: e.target.value }))}>
-                    <option value="">Select customer...</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.code} - {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.customerId ? <small className="error-text">{fieldErrors.customerId}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Vehicle No<sup className="required">*</sup>
-                  </span>
-                  <input list="vehicle-no-options" value={form.vehicleNo} onChange={(e) => setForm((prev) => ({ ...prev, vehicleNo: e.target.value }))} />
-                  {fieldErrors.vehicleNo ? <small className="error-text">{fieldErrors.vehicleNo}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Consignor<sup className="required">*</sup>
-                  </span>
-                  <input list="customer-name-options" value={form.consignorName} onChange={(e) => onConsignorChange(e.target.value)} />
-                  {fieldErrors.consignorName ? <small className="error-text">{fieldErrors.consignorName}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Consignee<sup className="required">*</sup>
-                  </span>
-                  <input list="customer-name-options" value={form.consigneeName} onChange={(e) => onConsigneeChange(e.target.value)} />
-                  {fieldErrors.consigneeName ? <small className="error-text">{fieldErrors.consigneeName}</small> : null}
-                </label>
-                <label className="consignment-wide">
-                  Consignor Address
-                  <textarea value={form.consignorAddress} onChange={(e) => setForm((prev) => ({ ...prev, consignorAddress: e.target.value }))} />
-                </label>
-                <label className="consignment-wide">
-                  Consignee Address
-                  <textarea value={form.consigneeAddress} onChange={(e) => setForm((prev) => ({ ...prev, consigneeAddress: e.target.value }))} />
-                </label>
-                <label>
-                  Consignor GST
-                  <input value={form.consignorGstNo} onChange={(e) => setForm((prev) => ({ ...prev, consignorGstNo: e.target.value }))} />
-                </label>
-                <label>
-                  Consignee GST
-                  <input value={form.consigneeGstNo} onChange={(e) => setForm((prev) => ({ ...prev, consigneeGstNo: e.target.value }))} />
-                </label>
+                <FormField label="Consignment No" required error={fieldErrors.consignmentNo}>
+                  <Input
+                    id="consignmentNo"
+                    value={form.consignmentNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consignmentNo: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Branch" required error={fieldErrors.branchId}>
+                  <Select value={form.branchId} onValueChange={(v) => setForm((prev) => ({ ...prev, branchId: v }))}>
+                    <SelectTrigger id="branchId" className="w-full">
+                      <SelectValue placeholder="Select branch..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.code} - {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Booking Date" required error={fieldErrors.bookingDate}>
+                  <DatePicker
+                    value={form.bookingDate}
+                    onChange={(value) => setForm((prev) => ({ ...prev, bookingDate: value }))}
+                  />
+                </FormField>
+                <FormField label="Customer" required error={fieldErrors.customerId}>
+                  <Select value={form.customerId} onValueChange={(v) => setForm((prev) => ({ ...prev, customerId: v }))}>
+                    <SelectTrigger id="customerId" className="w-full">
+                      <SelectValue placeholder="Select customer..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.code} - {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Vehicle No" required error={fieldErrors.vehicleNo}>
+                  <TypeaheadInput
+                    listId="vehicle-no-options"
+                    options={vehicles.map((v) => v.vehicleNumber)}
+                    value={form.vehicleNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, vehicleNo: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Consignor" required error={fieldErrors.consignorName}>
+                  <TypeaheadInput
+                    listId="customer-name-options"
+                    options={customers.map((c) => c.name)}
+                    value={form.consignorName}
+                    onChange={(e) => onConsignorChange(e.target.value)}
+                  />
+                </FormField>
+                <FormField label="Consignee" required error={fieldErrors.consigneeName}>
+                  <TypeaheadInput
+                    listId="customer-name-options-ee"
+                    options={customers.map((c) => c.name)}
+                    value={form.consigneeName}
+                    onChange={(e) => onConsigneeChange(e.target.value)}
+                  />
+                </FormField>
+                <FormField label="Consignor Address" fullWidth>
+                  <Textarea
+                    value={form.consignorAddress}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consignorAddress: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Consignee Address" fullWidth>
+                  <Textarea
+                    value={form.consigneeAddress}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consigneeAddress: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Consignor GST">
+                  <Input
+                    value={form.consignorGstNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consignorGstNo: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Consignee GST">
+                  <Input
+                    value={form.consigneeGstNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consigneeGstNo: e.target.value }))}
+                  />
+                </FormField>
               </div>
             </fieldset>
 
             <fieldset>
               <legend>Route And Delivery</legend>
               <div className="consignment-fields">
-                <label>
-                  From Location
-                  <input list="location-name-options" value={form.fromLocationName} onChange={(e) => setForm((prev) => ({ ...prev, fromLocationName: e.target.value }))} />
-                  {fieldErrors.fromLocationName ? <small className="error-text">{fieldErrors.fromLocationName}</small> : null}
-                </label>
-                <label>
-                  To Location
-                  <input list="location-name-options" value={form.toLocationName} onChange={(e) => setForm((prev) => ({ ...prev, toLocationName: e.target.value }))} />
-                  {fieldErrors.toLocationName ? <small className="error-text">{fieldErrors.toLocationName}</small> : null}
-                </label>
-                <label className="consignment-wide">
-                  Delivery Office Address
-                  <textarea
+                <FormField label="From Location" error={fieldErrors.fromLocationName}>
+                  <TypeaheadInput
+                    listId="location-name-options"
+                    options={locations.map((l) => toLocationRefValue(l))}
+                    value={form.fromLocationName}
+                    onChange={(e) => setForm((prev) => ({ ...prev, fromLocationName: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="To Location" error={fieldErrors.toLocationName}>
+                  <TypeaheadInput
+                    listId="location-name-options-to"
+                    options={locations.map((l) => toLocationRefValue(l))}
+                    value={form.toLocationName}
+                    onChange={(e) => setForm((prev) => ({ ...prev, toLocationName: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Delivery Office Address" fullWidth>
+                  <Textarea
                     value={form.deliveryOfficeAddress}
                     onChange={(e) => setForm((prev) => ({ ...prev, deliveryOfficeAddress: e.target.value }))}
                   />
-                </label>
-                <label>
-                  GST Payable By
-                  <select value={form.gstPayableBy} onChange={(e) => setForm((prev) => ({ ...prev, gstPayableBy: e.target.value }))}>
-                    <option>Transport Agency</option>
-                    <option>Consignor</option>
-                    <option>Consignee</option>
-                    <option>Exempted</option>
-                  </select>
-                </label>
-                <label>
-                  Private Mark No
-                  <input value={form.privateMarkNo} onChange={(e) => setForm((prev) => ({ ...prev, privateMarkNo: e.target.value }))} />
-                </label>
+                </FormField>
+                <FormField label="GST Payable By">
+                  <Select value={form.gstPayableBy} onValueChange={(v) => setForm((prev) => ({ ...prev, gstPayableBy: v }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Transport Agency">Transport Agency</SelectItem>
+                      <SelectItem value="Consignor">Consignor</SelectItem>
+                      <SelectItem value="Consignee">Consignee</SelectItem>
+                      <SelectItem value="Exempted">Exempted</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Private Mark No">
+                  <Input
+                    value={form.privateMarkNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, privateMarkNo: e.target.value }))}
+                  />
+                </FormField>
               </div>
             </fieldset>
 
             <fieldset>
               <legend>Goods And Weight</legend>
               <div className="consignment-fields">
-                <label>
-                  Packages
-                  <input type="text" inputMode="numeric" value={form.packages} onChange={(e) => setForm((prev) => ({ ...prev, packages: e.target.value }))} />
-                </label>
-                <label>
-                  Rate Per Qtl
-                  <input type="text" inputMode="decimal" value={form.ratePerQuintal} onChange={(e) => setForm((prev) => ({ ...prev, ratePerQuintal: e.target.value }))} />
-                </label>
-                <label>
-                  Actual Weight (3 Decimals)
-                  <input
+                <FormField label="Packages">
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    value={form.packages}
+                    onChange={(e) => setForm((prev) => ({ ...prev, packages: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Rate Per Qtl">
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.ratePerQuintal}
+                    onChange={(e) => setForm((prev) => ({ ...prev, ratePerQuintal: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Actual Weight (3 Decimals)">
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.actualWeight}
                     onChange={(e) => setForm((prev) => ({ ...prev, actualWeight: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, actualWeight: format3(prev.actualWeight) }))}
                   />
-                </label>
-                <label>
-                  Charged Weight (3 Decimals)
-                  <input
+                </FormField>
+                <FormField label="Charged Weight (3 Decimals)">
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.chargedWeight}
                     onChange={(e) => setForm((prev) => ({ ...prev, chargedWeight: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, chargedWeight: format3(prev.chargedWeight) }))}
                   />
-                </label>
-                <label className="consignment-wide">
-                  Description Of Goods
-                  <textarea value={form.goodsDescription} onChange={(e) => setForm((prev) => ({ ...prev, goodsDescription: e.target.value }))} />
-                </label>
+                </FormField>
+                <FormField label="Description Of Goods" fullWidth>
+                  <Textarea
+                    value={form.goodsDescription}
+                    onChange={(e) => setForm((prev) => ({ ...prev, goodsDescription: e.target.value }))}
+                  />
+                </FormField>
               </div>
             </fieldset>
 
             <fieldset>
               <legend>Charges And Billing</legend>
               <div className="consignment-fields">
-                <label>
-                  <span className="label-text">
-                    Basic Freight<sup className="required">*</sup>
-                  </span>
-                  <input
-                    className="numeric-input"
+                <FormField label="Basic Freight" required error={fieldErrors.basicFreight}>
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.basicFreight}
                     placeholder={basicFreightCalculated > 0 ? basicFreightCalculated.toFixed(2) : "0.00"}
                     onChange={(e) => setForm((prev) => ({ ...prev, basicFreight: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, basicFreight: format2(prev.basicFreight) }))}
+                    className="text-right"
                   />
-                  {fieldErrors.basicFreight ? <small className="error-text">{fieldErrors.basicFreight}</small> : null}
-                </label>
-                <label>
-                  S.T. Charge
-                  <input
+                </FormField>
+                <FormField label="S.T. Charge">
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.stCharge}
                     onChange={(e) => setForm((prev) => ({ ...prev, stCharge: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, stCharge: format2(prev.stCharge) }))}
+                    className="text-right"
                   />
-                </label>
-                <label>
-                  GST
-                  <input
+                </FormField>
+                <FormField label="GST">
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.gstAmount}
                     onChange={(e) => setForm((prev) => ({ ...prev, gstAmount: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, gstAmount: format2(prev.gstAmount) }))}
+                    className="text-right"
                   />
-                </label>
-                <label>
-                  Hamali
-                  <input
+                </FormField>
+                <FormField label="Hamali">
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.hamaliCharge}
                     onChange={(e) => setForm((prev) => ({ ...prev, hamaliCharge: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, hamaliCharge: format2(prev.hamaliCharge) }))}
+                    className="text-right"
                   />
-                </label>
-                <label>
-                  Door Delivery Charge
-                  <input
+                </FormField>
+                <FormField label="Door Delivery Charge">
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.doorDeliveryCharge}
                     onChange={(e) => setForm((prev) => ({ ...prev, doorDeliveryCharge: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, doorDeliveryCharge: format2(prev.doorDeliveryCharge) }))}
+                    className="text-right"
                   />
-                </label>
-                <label>
-                  Collection Charge
-                  <input
+                </FormField>
+                <FormField label="Collection Charge">
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.collectionCharge}
                     onChange={(e) => setForm((prev) => ({ ...prev, collectionCharge: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, collectionCharge: format2(prev.collectionCharge) }))}
+                    className="text-right"
                   />
-                </label>
-                <label>
-                  Advance Paid
-                  <input
+                </FormField>
+                <FormField label="Advance Paid">
+                  <Input
                     type="text"
                     inputMode="decimal"
                     value={form.advancePaid}
                     onChange={(e) => setForm((prev) => ({ ...prev, advancePaid: e.target.value }))}
                     onBlur={() => setForm((prev) => ({ ...prev, advancePaid: format2(prev.advancePaid) }))}
+                    className="text-right"
                   />
-                </label>
-                <label>
-                  Payment Basis
-                  <select value={form.paymentBasis} onChange={(e) => setForm((prev) => ({ ...prev, paymentBasis: e.target.value }))}>
-                    <option>To Pay</option>
-                    <option>To Be Billed</option>
-                    <option>Paid</option>
-                  </select>
-                </label>
-                <label>
-                  Invoice No
-                  <input value={form.invoiceNo} onChange={(e) => setForm((prev) => ({ ...prev, invoiceNo: e.target.value }))} />
-                </label>
-                <label>
-                  Invoice Date
-                  <input type="date" value={form.invoiceDate} onChange={(e) => setForm((prev) => ({ ...prev, invoiceDate: e.target.value }))} />
-                </label>
-                <label>
-                  Final Freight
-                  <input className="numeric-input" value={freightAmount.toFixed(2)} readOnly />
-                </label>
-                <label className="consignment-wide">
-                  Remarks
-                  <textarea value={form.remarks} onChange={(e) => setForm((prev) => ({ ...prev, remarks: e.target.value }))} />
-                </label>
+                </FormField>
+                <FormField label="Payment Basis">
+                  <Select value={form.paymentBasis} onValueChange={(v) => setForm((prev) => ({ ...prev, paymentBasis: v }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="To Pay">To Pay</SelectItem>
+                      <SelectItem value="To Be Billed">To Be Billed</SelectItem>
+                      <SelectItem value="Paid">Paid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Invoice No">
+                  <Input
+                    value={form.invoiceNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, invoiceNo: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Invoice Date">
+                  <DatePicker
+                    value={form.invoiceDate}
+                    onChange={(value) => setForm((prev) => ({ ...prev, invoiceDate: value }))}
+                  />
+                </FormField>
+                <FormField label="Final Freight">
+                  <Input value={freightAmount.toFixed(2)} readOnly className="text-right bg-muted" />
+                </FormField>
+                <FormField label="Remarks" fullWidth>
+                  <Textarea
+                    value={form.remarks}
+                    onChange={(e) => setForm((prev) => ({ ...prev, remarks: e.target.value }))}
+                  />
+                </FormField>
               </div>
             </fieldset>
           </div>
 
-          <datalist id="customer-name-options">
-            {customers.map((c) => (
-              <option key={c.id} value={c.name} />
-            ))}
-          </datalist>
-          <datalist id="location-name-options">
-            {locations.map((l) => (
-              <option key={l.id} value={toLocationRefValue(l)} />
-            ))}
-          </datalist>
-          <datalist id="vehicle-no-options">
-            {vehicles.map((v) => (
-              <option key={v.id} value={v.vehicleNumber} />
-            ))}
-          </datalist>
-
-          <div className="consignment-actions" style={{ marginTop: 12 }}>
-            <button className="btn-primary" type="submit" disabled={loading}>
+          <div className="consignment-actions" style={{ marginTop: 16 }}>
+            <Button type="submit" disabled={loading}>
               {editingId ? "Update Consignment" : "Create Consignment"}
-            </button>
-            <button className="btn-secondary" onClick={onReset} type="button">
+            </Button>
+            <Button variant="outline" onClick={onReset} type="button">
               Clear
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -576,7 +609,7 @@ export function ConsignmentsPage() {
               {pagedRows.map((r) => (
                 <tr key={r.id}>
                   <td>{r.consignmentNo}</td>
-                  <td>{r.bookingDate}</td>
+                  <td>{formatDate(r.bookingDate)}</td>
                   <td>{r.consignorName || "-"}</td>
                   <td>{r.consigneeName || "-"}</td>
                   <td>
@@ -586,12 +619,12 @@ export function ConsignmentsPage() {
                   <td>{r.status}</td>
                   <td>
                     <div className="consignment-table-actions">
-                      <button className="btn-secondary" onClick={() => onEdit(r)} type="button">
+                      <Button variant="outline" size="sm" onClick={() => onEdit(r)} type="button">
                         Edit
-                      </button>
-                      <button className="btn-danger" onClick={() => void onDelete(r.id)} type="button">
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => void onDelete(r.id)} type="button">
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

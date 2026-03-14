@@ -1,4 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
+import { Button } from "../components/ui/button"
+import { FormField } from "../components/ui/form-field"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select"
 import { TablePagination } from "../components/TablePagination"
 import { DateRangePicker } from "../components/ui/DateRangePicker"
 import { api } from "../lib/api"
@@ -11,8 +20,8 @@ export function PaymentReportPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [consignments, setConsignments] = useState<Consignment[]>([])
-  const [branchId, setBranchId] = useState("")
-  const [customerId, setCustomerId] = useState("")
+  const [branchId, setBranchId] = useState("__all__")
+  const [customerId, setCustomerId] = useState("__all__")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
   const [error, setError] = useState("")
@@ -67,8 +76,8 @@ export function PaymentReportPage() {
       filters: [
         { label: "Branch", value: findBranchName(branchId, branches) || "All" },
         { label: "Customer", value: findCustomerName(customerId, customers) || "All" },
-        { label: "From Date", value: fromDate || "All" },
-        { label: "To Date", value: toDate || "All" },
+        { label: "From Date", value: fromDate ? formatDate(fromDate) : "All" },
+        { label: "To Date", value: toDate ? formatDate(toDate) : "All" },
       ],
       columns: [
         { title: "Sl", value: (_, i) => String(i + 1), align: "right" },
@@ -92,31 +101,39 @@ export function PaymentReportPage() {
           <p>Filter money receipts by branch/date/customer and print PDF.</p>
         </div>
         <div className="consignment-actions">
-          <button className="btn-secondary" type="button" onClick={loadAll}>Refresh</button>
-          <button className="btn-primary" type="button" onClick={onPrint}>Download / Print PDF</button>
+          <Button variant="outline" size="sm" type="button" onClick={loadAll}>Refresh</Button>
+          <Button type="button" onClick={onPrint}>Download / Print PDF</Button>
         </div>
       </div>
       {error ? <div className="error">{error}</div> : null}
 
       <div className="report-filters">
-        <label>
-          Branch
-          <select value={branchId} onChange={(e) => { setBranchId(e.target.value); setPage(1) }}>
-            <option value="">Select branch...</option>
-            {branches.map((row) => (
-              <option key={row.id} value={row.id}>{row.code} - {row.name}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Customer
-          <select value={customerId} onChange={(e) => { setCustomerId(e.target.value); setPage(1) }}>
-            <option value="">Select customer...</option>
-            {customers.map((row) => (
-              <option key={row.id} value={row.id}>{row.code} - {row.name}</option>
-            ))}
-          </select>
-        </label>
+        <FormField label="Branch">
+          <Select value={branchId} onValueChange={(v) => { setBranchId(v); setPage(1) }}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All</SelectItem>
+              {branches.map((row) => (
+                <SelectItem key={row.id} value={row.id}>{row.code} - {row.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+        <FormField label="Customer">
+          <Select value={customerId} onValueChange={(v) => { setCustomerId(v); setPage(1) }}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All customers" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All</SelectItem>
+              {customers.map((row) => (
+                <SelectItem key={row.id} value={row.id}>{row.code} - {row.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
         <DateRangePicker
           from={fromDate}
           to={toDate}
@@ -150,7 +167,7 @@ export function PaymentReportPage() {
               <td className="numeric-cell">{(page - 1) * pageSize + index + 1}</td>
               <td>{findBranchCodeName(row.branchId, branches)}</td>
               <td>{row.receiptNo}</td>
-              <td>{row.receiptDate}</td>
+              <td>{formatDate(row.receiptDate)}</td>
               <td>{findReceiptCustomerName(row, invoices, consignments, customers)}</td>
               <td className="numeric-cell">{formatMoney(row.amount)}</td>
               <td className="numeric-cell">{formatMoney(0)}</td>

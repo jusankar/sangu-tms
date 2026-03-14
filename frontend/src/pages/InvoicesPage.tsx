@@ -1,7 +1,22 @@
 import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
+import { Button } from "../components/ui/button"
+import { DatePicker } from "../components/ui/date-picker"
+import { FormField } from "../components/ui/form-field"
+import { Input } from "../components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select"
+import { Tabs, TabsTrigger } from "../components/ui/tabs"
+import { Textarea } from "../components/ui/textarea"
+import { TypeaheadInput } from "../components/ui/typeahead-input"
 import { TablePagination } from "../components/TablePagination"
 import { api } from "../lib/api"
+import { formatDate } from "../lib/reporting"
 import type { Branch, Consignment, Customer, Invoice, Vehicle } from "../types"
 
 type TabKey = "form" | "list"
@@ -194,17 +209,17 @@ export function InvoicesPage() {
           <p>Create invoices with multiple consignments, tax, and running totals.</p>
         </div>
         <div className="consignment-actions">
-          <div className="page-tabs">
-            <button className={tab === "form" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("form")} type="button">
+          <Tabs>
+            <TabsTrigger active={tab === "form"} onClick={() => setTab("form")}>
               Form
-            </button>
-            <button className={tab === "list" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("list")} type="button">
+            </TabsTrigger>
+            <TabsTrigger active={tab === "list"} onClick={() => setTab("list")}>
               Listing
-            </button>
-          </div>
-          <button className="btn-secondary" onClick={() => void loadAll()} type="button">
+            </TabsTrigger>
+          </Tabs>
+          <Button variant="outline" size="sm" onClick={() => void loadAll()} type="button">
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -217,54 +232,41 @@ export function InvoicesPage() {
             <fieldset className="consignment-wide">
               <legend>Invoice Header</legend>
               <div className="consignment-fields">
-                <label>
-                  <span className="label-text">
-                    Invoice No<sup className="required">*</sup>
-                  </span>
-                  <input value={form.invoiceNo} onChange={(e) => setForm((prev) => ({ ...prev, invoiceNo: e.target.value }))} />
-                  {fieldErrors.invoiceNo ? <small className="error-text">{fieldErrors.invoiceNo}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Branch<sup className="required">*</sup>
-                  </span>
-                  <select value={form.branchId} onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value }))}>
-                    <option value="">Select branch...</option>
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.code} - {branch.name}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.branchId ? <small className="error-text">{fieldErrors.branchId}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Invoice Date<sup className="required">*</sup>
-                  </span>
-                  <input type="date" value={form.invoiceDate} onChange={(e) => setForm((prev) => ({ ...prev, invoiceDate: e.target.value }))} />
-                  {fieldErrors.invoiceDate ? <small className="error-text">{fieldErrors.invoiceDate}</small> : null}
-                </label>
-                <label>
-                  Due Date
-                  <input type="date" value={form.dueDate} onChange={(e) => setForm((prev) => ({ ...prev, dueDate: e.target.value }))} />
-                </label>
-                <label>
-                  Vehicle No
-                  <input list="invoice-vehicle-options" value={form.vehicleNo} onChange={(e) => setForm((prev) => ({ ...prev, vehicleNo: e.target.value }))} />
-                </label>
-                <label>
-                  Bill To
-                  <input list="invoice-customer-options" value={form.billToName} onChange={(e) => onBillToChange(e.target.value)} />
-                </label>
-                <label>
-                  Bill To Mobile
-                  <input value={form.billToMobile} onChange={(e) => setForm((prev) => ({ ...prev, billToMobile: e.target.value }))} />
-                </label>
-                <label className="consignment-wide">
-                  Bill To Address
-                  <textarea value={form.billToAddress} onChange={(e) => setForm((prev) => ({ ...prev, billToAddress: e.target.value }))} />
-                </label>
+                <FormField label="Invoice No" required error={fieldErrors.invoiceNo}>
+                  <Input value={form.invoiceNo} onChange={(e) => setForm((prev) => ({ ...prev, invoiceNo: e.target.value }))} />
+                </FormField>
+                <FormField label="Branch" required error={fieldErrors.branchId}>
+                  <Select value={form.branchId} onValueChange={(v) => setForm((prev) => ({ ...prev, branchId: v }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select branch..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.code} - {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Invoice Date" required error={fieldErrors.invoiceDate}>
+                  <DatePicker value={form.invoiceDate} onChange={(value) => setForm((prev) => ({ ...prev, invoiceDate: value }))} />
+                </FormField>
+                <FormField label="Due Date">
+                  <DatePicker value={form.dueDate} onChange={(value) => setForm((prev) => ({ ...prev, dueDate: value }))} />
+                </FormField>
+                <FormField label="Vehicle No">
+                  <TypeaheadInput listId="invoice-vehicle-options" options={vehicles.map((v) => v.vehicleNumber)} value={form.vehicleNo} onChange={(e) => setForm((prev) => ({ ...prev, vehicleNo: e.target.value }))} />
+                </FormField>
+                <FormField label="Bill To">
+                  <TypeaheadInput listId="invoice-customer-options" options={customers.map((c) => c.name)} value={form.billToName} onChange={(e) => onBillToChange(e.target.value)} />
+                </FormField>
+                <FormField label="Bill To Mobile">
+                  <Input value={form.billToMobile} onChange={(e) => setForm((prev) => ({ ...prev, billToMobile: e.target.value }))} />
+                </FormField>
+                <FormField label="Bill To Address" fullWidth>
+                  <Textarea value={form.billToAddress} onChange={(e) => setForm((prev) => ({ ...prev, billToAddress: e.target.value }))} />
+                </FormField>
               </div>
             </fieldset>
           </div>
@@ -298,50 +300,50 @@ export function InvoicesPage() {
                 {lines.map((line, idx) => (
                   <tr key={`inv-line-${idx}`}>
                     <td>
-                      <input list="invoice-consignment-options" value={line.consignmentNo} onChange={(e) => onConsignmentChange(idx, e.target.value)} />
+                      <TypeaheadInput listId={`inv-cn-${idx}`} options={consignments.map((c) => c.consignmentNo)} value={line.consignmentNo} onChange={(e) => onConsignmentChange(idx, e.target.value)} className="w-full" />
                     </td>
                     <td>
-                      <input className="lr-col-wide" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
+                      <Input className="lr-col-wide w-full" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
                     </td>
                     <td>
-                      <input className="numeric-input" value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
+                      <Input className="text-right w-full" value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
                     </td>
                     <td>
-                      <input
-                        className="numeric-input"
+                      <Input
+                        className="text-right w-full"
                         value={line.weight}
                         onChange={(e) => updateLine(idx, { weight: e.target.value })}
                         onBlur={() => updateLine(idx, { weight: toWeight(line.weight).toFixed(3) })}
                       />
                     </td>
                     <td>
-                      <input
-                        className="numeric-input"
+                      <Input
+                        className="text-right w-full"
                         value={line.rate}
                         onChange={(e) => updateLine(idx, { rate: e.target.value })}
                         onBlur={() => updateLine(idx, { rate: toAmount(line.rate).toFixed(2) })}
                       />
                     </td>
                     <td>
-                      <input
-                        className="numeric-input"
+                      <Input
+                        className="text-right w-full"
                         value={line.amount}
                         onChange={(e) => updateLine(idx, { amount: e.target.value })}
                         onBlur={() => updateLine(idx, { amount: toAmount(line.amount).toFixed(2) })}
                       />
                     </td>
                     <td>
-                      <input
-                        className="numeric-input"
+                      <Input
+                        className="text-right w-full"
                         value={line.tax}
                         onChange={(e) => updateLine(idx, { tax: e.target.value })}
                         onBlur={() => updateLine(idx, { tax: toAmount(line.tax).toFixed(2) })}
                       />
                     </td>
                     <td>
-                      <button className="btn-danger" onClick={() => removeLine(idx)} type="button">
+                      <Button variant="destructive" size="sm" onClick={() => removeLine(idx)} type="button">
                         Remove
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -378,36 +380,20 @@ export function InvoicesPage() {
               </tfoot>
             </table>
             {fieldErrors.lines ? <small className="error-text">{fieldErrors.lines}</small> : null}
-            <div style={{ marginTop: 10 }}>
-              <button className="btn-secondary" type="button" onClick={addLine}>
+            <div style={{ marginTop: 12 }}>
+              <Button variant="outline" size="sm" type="button" onClick={addLine}>
                 Add Row
-              </button>
+              </Button>
             </div>
           </fieldset>
 
-          <datalist id="invoice-consignment-options">
-            {consignments.map((row) => (
-              <option key={row.id} value={row.consignmentNo} />
-            ))}
-          </datalist>
-          <datalist id="invoice-customer-options">
-            {customers.map((row) => (
-              <option key={row.id} value={row.name} />
-            ))}
-          </datalist>
-          <datalist id="invoice-vehicle-options">
-            {vehicles.map((row) => (
-              <option key={row.id} value={row.vehicleNumber} />
-            ))}
-          </datalist>
-
-          <div className="consignment-actions" style={{ marginTop: 12 }}>
-            <button className="btn-primary" type="submit" disabled={loading}>
+          <div className="consignment-actions" style={{ marginTop: 16 }}>
+            <Button type="submit" disabled={loading}>
               Create Invoice
-            </button>
-            <button className="btn-secondary" onClick={onReset} type="button">
+            </Button>
+            <Button variant="outline" onClick={onReset} type="button">
               Clear
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -428,7 +414,7 @@ export function InvoicesPage() {
               {pagedRows.map((row) => (
                 <tr key={row.id}>
                   <td>{row.invoiceNo}</td>
-                  <td>{row.invoiceDate}</td>
+                  <td>{formatDate(row.invoiceDate)}</td>
                   <td className="numeric-cell">{row.taxableAmount.toFixed(2)}</td>
                   <td className="numeric-cell">{row.gstAmount.toFixed(2)}</td>
                   <td className="numeric-cell">{row.totalAmount.toFixed(2)}</td>

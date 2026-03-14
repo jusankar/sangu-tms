@@ -3,6 +3,9 @@ import type { FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../auth/AuthContext"
 import { ApiError } from "../lib/api"
+import { Button } from "../components/ui/button"
+import { FormField } from "../components/ui/form-field"
+import { Input } from "../components/ui/input"
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -35,20 +38,29 @@ export function LoginPage() {
   return (
     <div className="login-wrap">
       <form className="login-card" onSubmit={onSubmit}>
-        <h2>Sangu TMS Login</h2>
-        <p>Use your tenant credentials</p>
-        <label>
-          Email
-          <input value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <label>
-          Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        {error ? <div className="error">{error}</div> : null}
-        <button disabled={loading} type="submit">
+        <h2 className="text-xl font-semibold tracking-tight">Sangu TMS Login</h2>
+        <p className="text-sm text-muted-foreground">Use your tenant credentials</p>
+        <FormField label="Email">
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="admin@sangu.local"
+          />
+        </FormField>
+        <FormField label="Password">
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </FormField>
+        {error ? <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div> : null}
+        <Button className="w-full" disabled={loading} type="submit">
           {loading ? "Signing in..." : "Sign in"}
-        </button>
+        </Button>
       </form>
     </div>
   )

@@ -1,7 +1,21 @@
 import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
+import { Button } from "../components/ui/button"
+import { DatePicker } from "../components/ui/date-picker"
+import { FormField } from "../components/ui/form-field"
+import { Input } from "../components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select"
+import { Tabs, TabsTrigger } from "../components/ui/tabs"
+import { TypeaheadInput } from "../components/ui/typeahead-input"
 import { TablePagination } from "../components/TablePagination"
 import { api } from "../lib/api"
+import { formatDate } from "../lib/reporting"
 import type { Branch, Consignment, Driver, Location, Vehicle, VehicleReceipt, VehicleReceiptLineUpsert } from "../types"
 
 type TabKey = "form" | "list"
@@ -182,17 +196,17 @@ export function VehicleReceiptsPage() {
           <p>Create hire challans with multiple consignment lines and master lookups.</p>
         </div>
         <div className="consignment-actions">
-          <div className="page-tabs">
-            <button className={tab === "form" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("form")} type="button">
+          <Tabs>
+            <TabsTrigger active={tab === "form"} onClick={() => setTab("form")}>
               Form
-            </button>
-            <button className={tab === "list" ? "tab-btn active" : "tab-btn"} onClick={() => setTab("list")} type="button">
+            </TabsTrigger>
+            <TabsTrigger active={tab === "list"} onClick={() => setTab("list")}>
               Listing
-            </button>
-          </div>
-          <button className="btn-secondary" onClick={() => void loadAll()} type="button">
+            </TabsTrigger>
+          </Tabs>
+          <Button variant="outline" size="sm" onClick={() => void loadAll()} type="button">
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -205,78 +219,47 @@ export function VehicleReceiptsPage() {
             <fieldset className="consignment-wide">
               <legend>Header Details</legend>
               <div className="consignment-fields">
-                <label>
-                  <span className="label-text">
-                    Lorry Receipt No<sup className="required">*</sup>
-                  </span>
-                  <input value={form.challanNo} onChange={(e) => setForm((prev) => ({ ...prev, challanNo: e.target.value }))} />
-                  {fieldErrors.challanNo ? <small className="error-text">{fieldErrors.challanNo}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Branch<sup className="required">*</sup>
-                  </span>
-                  <select value={form.branchId} onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value }))}>
-                    <option value="">Select branch...</option>
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.code} - {branch.name}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.branchId ? <small className="error-text">{fieldErrors.branchId}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Date<sup className="required">*</sup>
-                  </span>
-                  <input type="date" value={form.challanDate} onChange={(e) => setForm((prev) => ({ ...prev, challanDate: e.target.value }))} />
-                  {fieldErrors.challanDate ? <small className="error-text">{fieldErrors.challanDate}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    From<sup className="required">*</sup>
-                  </span>
-                  <input
-                    list="location-lookup-options"
-                    value={form.fromLocationRef}
-                    onChange={(e) => setForm((prev) => ({ ...prev, fromLocationRef: e.target.value }))}
-                  />
-                  {fieldErrors.fromLocationRef ? <small className="error-text">{fieldErrors.fromLocationRef}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    To<sup className="required">*</sup>
-                  </span>
-                  <input list="location-lookup-options" value={form.toLocationRef} onChange={(e) => setForm((prev) => ({ ...prev, toLocationRef: e.target.value }))} />
-                  {fieldErrors.toLocationRef ? <small className="error-text">{fieldErrors.toLocationRef}</small> : null}
-                </label>
-                <label>
-                  Owner Name
-                  <input value={form.ownerName} onChange={(e) => setForm((prev) => ({ ...prev, ownerName: e.target.value }))} />
-                </label>
-                <label>
-                  <span className="label-text">
-                    Vehicle<sup className="required">*</sup>
-                  </span>
-                  <input list="vehicle-lookup-options" value={form.vehicleRef} onChange={(e) => setForm((prev) => ({ ...prev, vehicleRef: e.target.value }))} />
-                  {fieldErrors.vehicleRef ? <small className="error-text">{fieldErrors.vehicleRef}</small> : null}
-                </label>
-                <label>
-                  <span className="label-text">
-                    Driver<sup className="required">*</sup>
-                  </span>
-                  <input list="driver-lookup-options" value={form.driverRef} onChange={(e) => onDriverChange(e.target.value)} />
-                  {fieldErrors.driverRef ? <small className="error-text">{fieldErrors.driverRef}</small> : null}
-                </label>
-                <label>
-                  Driver License No
-                  <input value={form.driverLicenseNo} onChange={(e) => setForm((prev) => ({ ...prev, driverLicenseNo: e.target.value }))} />
-                </label>
-                <label>
-                  Driver Mobile
-                  <input value={form.driverMobile} onChange={(e) => setForm((prev) => ({ ...prev, driverMobile: e.target.value }))} />
-                </label>
+                <FormField label="Lorry Receipt No" required error={fieldErrors.challanNo}>
+                  <Input value={form.challanNo} onChange={(e) => setForm((prev) => ({ ...prev, challanNo: e.target.value }))} />
+                </FormField>
+                <FormField label="Branch" required error={fieldErrors.branchId}>
+                  <Select value={form.branchId} onValueChange={(v) => setForm((prev) => ({ ...prev, branchId: v }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select branch..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.code} - {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Date" required error={fieldErrors.challanDate}>
+                  <DatePicker value={form.challanDate} onChange={(value) => setForm((prev) => ({ ...prev, challanDate: value }))} />
+                </FormField>
+                <FormField label="From" required error={fieldErrors.fromLocationRef}>
+                  <TypeaheadInput listId="location-from-options" options={locations.map((l) => toLocationRefValue(l))} value={form.fromLocationRef} onChange={(e) => setForm((prev) => ({ ...prev, fromLocationRef: e.target.value }))} />
+                </FormField>
+                <FormField label="To" required error={fieldErrors.toLocationRef}>
+                  <TypeaheadInput listId="location-to-options" options={locations.map((l) => toLocationRefValue(l))} value={form.toLocationRef} onChange={(e) => setForm((prev) => ({ ...prev, toLocationRef: e.target.value }))} />
+                </FormField>
+                <FormField label="Owner Name">
+                  <Input value={form.ownerName} onChange={(e) => setForm((prev) => ({ ...prev, ownerName: e.target.value }))} />
+                </FormField>
+                <FormField label="Vehicle" required error={fieldErrors.vehicleRef}>
+                  <TypeaheadInput listId="vehicle-lookup-options" options={vehicles.filter((v) => v.isActive).map((v) => v.vehicleNumber)} value={form.vehicleRef} onChange={(e) => setForm((prev) => ({ ...prev, vehicleRef: e.target.value }))} />
+                </FormField>
+                <FormField label="Driver" required error={fieldErrors.driverRef}>
+                  <TypeaheadInput listId="driver-lookup-options" options={drivers.filter((d) => d.isActive).map((d) => d.name)} value={form.driverRef} onChange={(e) => onDriverChange(e.target.value)} />
+                </FormField>
+                <FormField label="Driver License No">
+                  <Input value={form.driverLicenseNo} onChange={(e) => setForm((prev) => ({ ...prev, driverLicenseNo: e.target.value }))} />
+                </FormField>
+                <FormField label="Driver Mobile">
+                  <Input value={form.driverMobile} onChange={(e) => setForm((prev) => ({ ...prev, driverMobile: e.target.value }))} />
+                </FormField>
               </div>
             </fieldset>
           </div>
@@ -304,26 +287,21 @@ export function VehicleReceiptsPage() {
                 {lines.map((line, idx) => (
                   <tr key={`line-${idx}`}>
                     <td>
-                      <input
-                        className="lr-col-compact"
-                        list="consignment-lookup-options"
-                        value={line.consignmentNo}
-                        onChange={(e) => onConsignmentNoChange(idx, e.target.value)}
-                      />
+                      <TypeaheadInput listId={`ch-cn-${idx}`} options={consignments.map((c) => c.consignmentNo)} value={line.consignmentNo} onChange={(e) => onConsignmentNoChange(idx, e.target.value)} className="w-full" />
                     </td>
                     <td>
-                      <input className="lr-col-wide" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
+                      <Input className="lr-col-wide w-full" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
                     </td>
                     <td>
-                      <input className="lr-col-compact numeric-input" value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
+                      <Input className="text-right w-full" value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
                     </td>
                     <td>
-                      <input className="lr-col-compact numeric-input" value={line.weightKg} onChange={(e) => updateLine(idx, { weightKg: e.target.value })} />
+                      <Input className="text-right w-full" value={line.weightKg} onChange={(e) => updateLine(idx, { weightKg: e.target.value })} />
                     </td>
                     <td>
-                      <button className="btn-danger" onClick={() => removeLine(idx)} type="button">
+                      <Button variant="destructive" size="sm" onClick={() => removeLine(idx)} type="button">
                         Remove
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -340,75 +318,37 @@ export function VehicleReceiptsPage() {
             </table>
             {fieldErrors.lines ? <small className="error-text">{fieldErrors.lines}</small> : null}
             <div style={{ marginTop: 10 }}>
-              <button className="btn-secondary" onClick={addLine} type="button">
+              <Button variant="outline" size="sm" onClick={addLine} type="button">
                 Add Consignment
-              </button>
+              </Button>
             </div>
           </fieldset>
 
           <fieldset style={{ marginTop: 12 }}>
             <legend>Freight And Hire</legend>
             <div className="consignment-fields lorry-hire-row">
-              <label>
-                <span className="label-text">
-                  Lorry Hire<sup className="required">*</sup>
-                </span>
-                <input
-                  className="numeric-input"
-                  value={form.totalHire}
-                  onChange={(e) => setForm((prev) => ({ ...prev, totalHire: e.target.value }))}
-                  onBlur={() => setForm((prev) => ({ ...prev, totalHire: toAmount(prev.totalHire).toFixed(2) }))}
-                />
-                {fieldErrors.totalHire ? <small className="error-text">{fieldErrors.totalHire}</small> : null}
-              </label>
-              <label>
-                Advance
-                <input
-                  className="numeric-input"
-                  value={form.advanceAmount}
-                  onChange={(e) => setForm((prev) => ({ ...prev, advanceAmount: e.target.value }))}
-                  onBlur={() => setForm((prev) => ({ ...prev, advanceAmount: toAmount(prev.advanceAmount).toFixed(2) }))}
-                />
-              </label>
-              <label>
-                Balance
-                <input className="numeric-input" value={balanceAmount.toFixed(2)} readOnly />
-              </label>
-              <label>
-                Balance At (Location)
-                <input list="location-lookup-options" value={form.balanceAt} onChange={(e) => setForm((prev) => ({ ...prev, balanceAt: e.target.value }))} />
-              </label>
+              <FormField label="Lorry Hire" required error={fieldErrors.totalHire}>
+                <Input className="text-right" value={form.totalHire} onChange={(e) => setForm((prev) => ({ ...prev, totalHire: e.target.value }))} onBlur={() => setForm((prev) => ({ ...prev, totalHire: toAmount(prev.totalHire).toFixed(2) }))} />
+              </FormField>
+              <FormField label="Advance">
+                <Input className="text-right" value={form.advanceAmount} onChange={(e) => setForm((prev) => ({ ...prev, advanceAmount: e.target.value }))} onBlur={() => setForm((prev) => ({ ...prev, advanceAmount: toAmount(prev.advanceAmount).toFixed(2) }))} />
+              </FormField>
+              <FormField label="Balance">
+                <Input className="text-right bg-muted" value={balanceAmount.toFixed(2)} readOnly />
+              </FormField>
+              <FormField label="Balance At (Location)">
+                <TypeaheadInput listId="balance-at-options" options={locations.map((l) => toLocationRefValue(l))} value={form.balanceAt} onChange={(e) => setForm((prev) => ({ ...prev, balanceAt: e.target.value }))} />
+              </FormField>
             </div>
           </fieldset>
 
-          <datalist id="location-lookup-options">
-            {locations.map((location) => (
-              <option key={location.id} value={toLocationRefValue(location)} />
-            ))}
-          </datalist>
-          <datalist id="driver-lookup-options">
-            {drivers.filter((d) => d.isActive).map((driver) => (
-              <option key={driver.id} value={driver.name} />
-            ))}
-          </datalist>
-          <datalist id="vehicle-lookup-options">
-            {vehicles.filter((v) => v.isActive).map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.vehicleNumber} />
-            ))}
-          </datalist>
-          <datalist id="consignment-lookup-options">
-            {consignments.map((consignment) => (
-              <option key={consignment.id} value={consignment.consignmentNo} />
-            ))}
-          </datalist>
-
           <div className="consignment-actions" style={{ marginTop: 12 }}>
-            <button className="btn-primary" type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading}>
               Create Lorry Receipt
-            </button>
-            <button className="btn-secondary" onClick={onReset} type="button">
+            </Button>
+            <Button variant="outline" onClick={onReset} type="button">
               Clear
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -431,7 +371,7 @@ export function VehicleReceiptsPage() {
               {pagedRows.map((row) => (
                 <tr key={row.id}>
                   <td>{row.challanNo}</td>
-                  <td>{row.challanDate}</td>
+                  <td>{formatDate(row.challanDate)}</td>
                   <td>{row.vehicleNo || "-"}</td>
                   <td>{row.driverName || "-"}</td>
                   <td>

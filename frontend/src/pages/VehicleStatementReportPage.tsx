@@ -1,4 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
+import { Button } from "../components/ui/button"
+import { FormField } from "../components/ui/form-field"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select"
+import { TypeaheadInput } from "../components/ui/typeahead-input"
 import { TablePagination } from "../components/TablePagination"
 import { DateRangePicker } from "../components/ui/DateRangePicker"
 import { api } from "../lib/api"
@@ -10,7 +20,7 @@ export function VehicleStatementReportPage() {
   const [branches, setBranches] = useState<Branch[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
-  const [branchId, setBranchId] = useState("")
+  const [branchId, setBranchId] = useState("__all__")
   const [vehicleRef, setVehicleRef] = useState("")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
@@ -43,7 +53,7 @@ export function VehicleStatementReportPage() {
   const filteredRows = useMemo(
     () =>
       rows.filter((row) => {
-        if (branchId && row.branchId !== branchId) return false
+        if (branchId && branchId !== "__all__" && row.branchId !== branchId) return false
         if (vehicleRef && !isVehicleMatch(row, vehicleRef, vehicles)) return false
         if (fromDate && row.challanDate < fromDate) return false
         if (toDate && row.challanDate > toDate) return false
@@ -60,8 +70,8 @@ export function VehicleStatementReportPage() {
       filters: [
         { label: "Branch", value: findBranchName(branchId, branches) || "All" },
         { label: "Vehicle", value: vehicleRef || "All" },
-        { label: "From Date", value: fromDate || "All" },
-        { label: "To Date", value: toDate || "All" },
+        { label: "From Date", value: fromDate ? formatDate(fromDate) : "All" },
+        { label: "To Date", value: toDate ? formatDate(toDate) : "All" },
       ],
       columns: [
         { title: "Sl", value: (_, i) => String(i + 1), align: "right" },
@@ -88,31 +98,29 @@ export function VehicleStatementReportPage() {
           <p>Filter lorry hire entries by branch/date/vehicle and print PDF.</p>
         </div>
         <div className="consignment-actions">
-          <button className="btn-secondary" type="button" onClick={loadAll}>Refresh</button>
-          <button className="btn-primary" type="button" onClick={onPrint}>Download / Print PDF</button>
+          <Button variant="outline" size="sm" type="button" onClick={loadAll}>Refresh</Button>
+          <Button type="button" onClick={onPrint}>Download / Print PDF</Button>
         </div>
       </div>
       {error ? <div className="error">{error}</div> : null}
 
       <div className="report-filters">
-        <label>
-          Branch
-          <select value={branchId} onChange={(e) => { setBranchId(e.target.value); setPage(1) }}>
-            <option value="">Select branch...</option>
-            {branches.map((row) => (
-              <option key={row.id} value={row.id}>{row.code} - {row.name}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Vehicle
-          <input list="vehicle-statement-options" value={vehicleRef} onChange={(e) => { setVehicleRef(e.target.value); setPage(1) }} />
-          <datalist id="vehicle-statement-options">
-            {vehicles.map((row) => (
-              <option key={row.id} value={row.vehicleNumber} />
-            ))}
-          </datalist>
-        </label>
+        <FormField label="Branch">
+          <Select value={branchId} onValueChange={(v) => { setBranchId(v); setPage(1) }}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All</SelectItem>
+              {branches.map((row) => (
+                <SelectItem key={row.id} value={row.id}>{row.code} - {row.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+        <FormField label="Vehicle">
+          <TypeaheadInput listId="vehicle-statement-options" options={vehicles.map((v) => v.vehicleNumber)} value={vehicleRef} onChange={(e) => { setVehicleRef(e.target.value); setPage(1) }} />
+        </FormField>
         <DateRangePicker
           from={fromDate}
           to={toDate}
@@ -149,7 +157,7 @@ export function VehicleStatementReportPage() {
               <td className="numeric-cell">{(page - 1) * pageSize + index + 1}</td>
               <td>{findBranchCodeName(row.branchId, branches)}</td>
               <td>{row.challanNo}</td>
-              <td>{row.challanDate}</td>
+              <td>{formatDate(row.challanDate)}</td>
               <td>{findLocationName(row.fromLocationId, locations)}</td>
               <td>{findLocationName(row.toLocationId, locations)}</td>
               <td>{findVehicleDisplay(row, vehicles)}</td>

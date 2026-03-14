@@ -1,5 +1,7 @@
+@import "tailwindcss";
+
 :root {
-  --font-ui: "Plus Jakarta Sans", "Segoe UI", Tahoma, sans-serif;
+  --font-ui: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   --bg-app: linear-gradient(180deg, #f7fafc 0%, #eef3f9 100%);
   --bg-shell: #f3f7fd;
   --bg-card: #ffffff;
@@ -13,6 +15,27 @@
   --accent-yellow: #5a94d6;
   --accent-blue: #1f6fbf;
   --surface-shadow: 0 14px 26px rgba(15, 23, 42, 0.12);
+
+  /* shadcn theme tokens - primary uses brand red for main actions */
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222 47% 11%);
+  --primary: hsl(0 63% 49%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(210 40% 96%);
+  --secondary-foreground: hsl(222 47% 11%);
+  --destructive: hsl(0 63% 49%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --muted: hsl(210 40% 96%);
+  --muted-foreground: hsl(215 16% 47%);
+  --accent: hsl(210 40% 96%);
+  --accent-foreground: hsl(222 47% 11%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222 47% 11%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222 47% 11%);
+  --border: hsl(214 32% 91%);
+  --input: hsl(214 32% 91%);
+  --ring: hsl(211 100% 37%);
 }
 
 :root[data-theme="dark"] {
@@ -29,6 +52,55 @@
   --accent-yellow: #6ea8de;
   --accent-blue: #67a8e8;
   --surface-shadow: 0 20px 38px rgba(2, 6, 23, 0.55);
+
+  --background: hsl(222 47% 11%);
+  --foreground: hsl(210 40% 98%);
+  --primary: hsl(0 63% 60%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(217 33% 17%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 63% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --muted: hsl(217 33% 17%);
+  --muted-foreground: hsl(215 20% 65%);
+  --accent: hsl(217 33% 17%);
+  --accent-foreground: hsl(210 40% 98%);
+  --popover: hsl(222 47% 11%);
+  --popover-foreground: hsl(210 40% 98%);
+  --card: hsl(222 47% 11%);
+  --card-foreground: hsl(210 40% 98%);
+  --border: hsl(217 33% 17%);
+  --input: hsl(217 33% 17%);
+  --ring: hsl(211 96% 60%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 * {
@@ -319,20 +391,20 @@ body {
   font-size: 1.1rem;
 }
 
-table {
+.panel table {
   width: 100%;
   border-collapse: collapse;
 }
 
-th,
-td {
+.panel table th,
+.panel table td {
   border-bottom: 1px solid var(--border);
   padding: 10px 8px;
   text-align: left;
   font-size: 0.92rem;
 }
 
-thead th {
+.panel table thead th {
   background: color-mix(in srgb, var(--bg-soft) 55%, var(--bg-card));
 }
 
@@ -353,13 +425,14 @@ thead th {
 }
 
 .login-card {
-  width: min(420px, 94vw);
+  width: min(400px, 94vw);
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: 24px;
   display: grid;
-  gap: 10px;
+  gap: 16px;
+  box-shadow: var(--surface-shadow);
 }
 
 .login-card h2 {
@@ -368,31 +441,6 @@ thead th {
 
 .login-card p {
   margin: 0;
-  color: var(--text-soft);
-}
-
-.login-card label {
-  display: grid;
-  gap: 6px;
-  font-size: 0.9rem;
-}
-
-.login-card input {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  color: var(--text-main);
-  background: var(--bg-card);
-}
-
-.login-card button {
-  border: 0;
-  background: var(--brand);
-  color: #fff;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
 }
 
 .consignment-layout {
@@ -451,7 +499,7 @@ thead th {
 
 .consignment-grid {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -460,39 +508,25 @@ thead th {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--bg-card);
-  padding: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .consignment-grid legend {
   font-weight: 600;
-  padding: 0 6px;
+  font-size: 0.875rem;
+  padding: 0 8px;
+  color: var(--text-main);
 }
 
 .consignment-fields {
   display: grid;
-  gap: 10px;
+  gap: 12px 16px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.consignment-fields label {
-  display: grid;
-  gap: 6px;
-  font-size: 0.9rem;
-}
-
-.consignment-fields input,
-.consignment-fields textarea,
-.consignment-fields select {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  background: var(--bg-card);
-  color: var(--text-main);
-}
-
-.consignment-fields textarea {
-  min-height: 72px;
-  resize: vertical;
+.consignment-fields .form-field {
+  min-width: 0;
 }
 
 .consignment-wide {
@@ -527,27 +561,11 @@ thead th {
 .module-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px 16px;
 }
 
-.module-form label {
-  display: grid;
-  gap: 6px;
-  font-size: 0.9rem;
-}
-
-.label-text {
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.module-form input,
-.module-form select {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  background: var(--bg-card);
-  color: var(--text-main);
+.module-form .form-field {
+  min-width: 0;
 }
 
 input[type="number"] {
@@ -785,8 +803,9 @@ input[inputmode="numeric"],
 
 .module-form-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   grid-column: 1 / -1;
+  margin-top: 4px;
 }
 
 .lorry-lines-table input {
@@ -835,6 +854,7 @@ input[inputmode="numeric"],
   gap: 6px;
   font-size: 0.9rem;
 }
+
 
 @media (max-width: 900px) {
   .app-body {

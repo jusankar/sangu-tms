@@ -1,3 +1,12 @@
+import { Button } from "./ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select"
+
 type TablePaginationProps = {
   page: number
   pageSize: number
@@ -19,33 +28,39 @@ export function TablePagination({
 
   return (
     <div className="table-pagination">
-      <div>
+      <div className="text-sm text-muted-foreground">
         Showing {start}-{end} of {totalRows}
       </div>
       <div className="table-pagination-controls">
-        <label>
+        <label className="inline-flex items-center gap-2 text-sm">
           Rows
-          <select value={pageSize} onChange={(e) => onPageSizeChange(Number(e.target.value))}>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+          <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
+            <SelectTrigger className="h-8 w-16">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
         </label>
-        <button className="btn-secondary" disabled={page <= 1} onClick={() => onPageChange(page - 1)} type="button">
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)} type="button">
           Prev
-        </button>
-        <span>
+        </Button>
+        <span className="text-sm text-muted-foreground">
           {page} / {totalPages}
         </span>
-        <button
-          className="btn-secondary"
+        <Button
+          variant="outline"
+          size="sm"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
           type="button"
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   )
