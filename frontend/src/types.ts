@@ -213,3 +213,83 @@ export type VehicleReceipt = VehicleReceiptUpsert & {
   status: string
   consignments: Array<VehicleReceiptLineUpsert>
 }
+
+export type TrafficMaterial = {
+  id: string
+  length: number
+  width: number
+  height: number
+  weight: number
+  qty: number
+  stackable: boolean
+  maxStack?: number
+}
+
+export type TrafficTrailerType = {
+  type: string
+  L: number
+  W: number
+  H: number
+  maxWeight: number
+}
+
+export type TrafficPlanRequest = {
+  materials: TrafficMaterial[]
+  trailers: TrafficTrailerType[]
+  allowRotation: boolean
+  allowStacking: boolean
+}
+
+export type TrafficTrailerItemPlan = {
+  materialId: string
+  quantity: number
+  stackCount: number
+}
+
+export type TrafficPlacement = {
+  materialId: string
+  quantity: number
+  stackCount: number
+  x: number
+  y: number
+  z: number
+  length: number
+  width: number
+  height: number
+  weight: number
+}
+
+export type TrafficTrailerPlan = {
+  trailerType: string
+  trailerLength: number
+  trailerWidth: number
+  trailerHeight: number
+  totalWeight: number
+  items: TrafficTrailerItemPlan[]
+  placements: TrafficPlacement[]
+}
+
+export type TrafficPlanResponse = {
+  planId?: string
+  recommendedTrailerType: string
+  totalTrailers: number
+  trailers: TrafficTrailerPlan[]
+  warnings: string[]
+  mode: string
+}
+
+export type TrafficPlanSummary = {
+  planId: string
+  recommendedTrailerType: string
+  totalTrailers: number
+  mode: string
+  createdAt: string
+}
+
+export type ChatAskResponse = {
+  answer: string
+  success: boolean
+  intent: string
+  data?: Record<string, unknown>
+}
+

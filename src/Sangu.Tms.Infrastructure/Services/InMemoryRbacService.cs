@@ -126,7 +126,7 @@ public sealed class InMemoryRbacService : IRbacService
                 ("receipt", "view"), ("receipt", "create"),
                 ("report", "booking"), ("report", "lorry_payment"), ("report", "vehicle_payment"), ("report", "outstanding"),
                 ("settings", "branch"), ("settings", "location"), ("settings", "customer"), ("settings", "driver"), ("settings", "vehicle"),
-                ("users", "manage"), ("roles", "manage")
+                ("users", "manage"), ("roles", "manage"), ("traffic", "plan")
             };
 
             foreach (var (moduleCode, actionCode) in keys)
@@ -165,3 +165,4 @@ public sealed class InMemoryRbacService : IRbacService
         if (invalid) throw new ArgumentException("One or more role IDs are invalid.");
     }
 }
+

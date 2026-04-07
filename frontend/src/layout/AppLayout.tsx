@@ -21,6 +21,7 @@ import type { ComponentType } from "react"
 import { useState } from "react"
 import { Link, NavLink, Outlet } from "react-router-dom"
 import { useAuth } from "../auth/AuthContext"
+import { FloatingChatWidget } from "../components/FloatingChatWidget"
 import { ThemeToggle } from "../components/ThemeToggle"
 
 const menuGroups = [
@@ -48,6 +49,12 @@ const menuGroups = [
     ],
   },
   {
+    title: "Traffic",
+    items: [
+      { to: "/traffic/vehicle-placement", label: "Vehicle Placement", icon: LayersIcon },
+      { to: "/traffic/vehicle-placement/history", label: "Load Previous Plan", icon: ArchiveIcon },
+    ],
+  },  {
     title: "Reports",
     items: [
       { to: "/reports/booking", label: "Booking", icon: TableIcon },
@@ -117,6 +124,7 @@ export function AppLayout() {
           </main>
         </div>
       </div>
+      <FloatingChatWidget />
     </div>
   )
 }
@@ -141,3 +149,4 @@ function MenuLink({
     </NavLink>
   )
 }
+

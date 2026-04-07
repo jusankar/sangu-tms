@@ -38,6 +38,7 @@ public sealed class InMemoryDataStore
             ("invoice", "view"), ("invoice", "create"), ("invoice", "post"),
             ("receipt", "view"), ("receipt", "create"),
             ("report", "booking"), ("report", "lorry_payment"), ("report", "vehicle_payment"), ("report", "outstanding"),
+            ("traffic", "plan"),
             ("settings", "branch"), ("settings", "location"), ("settings", "customer"), ("settings", "driver"), ("settings", "vehicle"),
             ("users", "manage"), ("roles", "manage")
         };
@@ -53,3 +54,5 @@ public sealed class InMemoryDataStore
         }
     }
 }
+
+

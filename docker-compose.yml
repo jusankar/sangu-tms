@@ -14,7 +14,19 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: http://localhost:5000
+        VITE_CHAT_API_BASE_URL: http://localhost:5006
     ports:
       - "8080:80"
     depends_on:
       - api
+      - chat-service
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        PROJECT_PATH: src/Sangu.Tms.ChatService/Sangu.Tms.ChatService.csproj
+        SERVICE_DLL: Sangu.Tms.ChatService.dll
+    ports:
+      - "5006:5000"

@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Sangu.Tms.Api.Authentication;
 using Sangu.Tms.Api.Authorization;
 using Sangu.Tms.Api.Middleware;
 using Sangu.Tms.Application.Interfaces;
+using Sangu.Tms.Infrastructure.Data;
 using Sangu.Tms.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,7 +20,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(corsPolicy, policy =>
         policy
-            .WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+            .WithOrigins("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174")
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -64,7 +66,7 @@ builder.Services.AddAuthorization(options =>
         "receipt.view", "receipt.create",
         "report.booking", "report.lorry_payment", "report.vehicle_payment", "report.outstanding",
         "settings.branch", "settings.location", "settings.customer", "settings.driver", "settings.vehicle",
-        "users.manage", "roles.manage"
+        "users.manage", "roles.manage", "traffic.plan"
     };
     foreach (var perm in permissions)
     {
@@ -75,21 +77,37 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddSingleton<InMemoryDataStore>();
 builder.Services.AddSingleton<INumberingService, InMemoryNumberingService>();
-builder.Services.AddSingleton<IConsignmentService, InMemoryConsignmentService>();
-builder.Services.AddSingleton<IChallanService, InMemoryChallanService>();
-builder.Services.AddSingleton<IInvoiceService, InMemoryInvoiceService>();
-builder.Services.AddSingleton<IMoneyReceiptService, InMemoryMoneyReceiptService>();
-builder.Services.AddSingleton<IReportService, InMemoryReportService>();
-builder.Services.AddSingleton<IBranchService, InMemoryBranchService>();
-builder.Services.AddSingleton<ILocationService, InMemoryLocationService>();
-builder.Services.AddSingleton<ICustomerService, InMemoryCustomerService>();
-builder.Services.AddSingleton<IDriverService, InMemoryDriverService>();
-builder.Services.AddSingleton<IVehicleService, InMemoryVehicleService>();
+builder.Services.AddDbContext<SanguTmsDbContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("TenantDb");
+    options.UseNpgsql(connectionString);
+});
+
+builder.Services.AddHttpClient<ITrafficPlanningService, PythonTrafficPlanningService>(client =>
+{
+    var baseUrl = builder.Configuration.GetValue<string>("TrafficPackingService:BaseUrl") ?? "http://localhost:8002";
+    client.BaseAddress = new Uri(baseUrl);
+}
+);
+builder.Services.AddScoped<ITrafficPlanStore, PostgresTrafficPlanStore>();
+builder.Services.AddScoped<IConsignmentService, PostgresConsignmentService>();
+builder.Services.AddScoped<IChallanService, PostgresChallanService>();
+builder.Services.AddScoped<IInvoiceService, PostgresInvoiceService>();
+builder.Services.AddScoped<IMoneyReceiptService, PostgresMoneyReceiptService>();
+builder.Services.AddScoped<IReportService, PostgresReportService>();
+builder.Services.AddScoped<IBranchService, PostgresBranchService>();
+builder.Services.AddScoped<ILocationService, PostgresLocationService>();
+builder.Services.AddScoped<ICustomerService, PostgresCustomerService>();
+builder.Services.AddScoped<IDriverService, PostgresDriverService>();
+builder.Services.AddScoped<IVehicleService, PostgresVehicleService>();
 builder.Services.AddSingleton<IRbacService, InMemoryRbacService>();
-builder.Services.AddSingleton<ILicenseService, InMemoryLicenseService>();
+builder.Services.AddScoped<ILicenseService, PostgresLicenseService>();
 builder.Services.AddSingleton<IAuthService, InMemoryAuthService>();
 
 var app = builder.Build();
+
+// Ensure permissions are seeded for in-memory auth.
+_ = app.Services.GetRequiredService<IRbacService>();
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -133,9 +151,23 @@ app.MapGet("/api/info", () => Results.Ok(new
         "GET /api/vehicles",
         "GET /api/rbac/permissions",
         "GET /api/rbac/roles",
-        "GET /api/rbac/users"
+        "GET /api/rbac/users",
+        "POST /api/traffic/vehicle-placement/plan"
     }
 }));
 app.MapControllers();
 
 app.Run();
+
+
+
+
+
+
+
+
+
+
+
+
+

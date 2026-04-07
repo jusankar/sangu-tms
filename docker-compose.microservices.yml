@@ -48,3 +48,13 @@ services:
         SERVICE_DLL: Sangu.Tms.ReportingService.dll
     ports:
       - "5005:5000"
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        PROJECT_PATH: src/Sangu.Tms.ChatService/Sangu.Tms.ChatService.csproj
+        SERVICE_DLL: Sangu.Tms.ChatService.dll
+    ports:
+      - "5006:5000"

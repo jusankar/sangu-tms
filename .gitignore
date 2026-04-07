@@ -34,6 +34,7 @@ pnpm-debug.log*
 .user/
 .user+/
 .npm-cache/
+.venv/
 
 # Build / runtime outputs
 *.log
@@ -46,4 +47,4 @@ _tmp_doc.zip
 
 # Docker
 **/.docker/
-
+.env

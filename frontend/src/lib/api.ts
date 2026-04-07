@@ -1,4 +1,4 @@
-import { API_BASE_URL, TENANT_CODE } from "./config"
+import { API_BASE_URL, CHAT_API_BASE_URL, TENANT_CODE } from "./config"
 import { logger } from "./logger"
 import { storage } from "./storage"
 import type {
@@ -19,6 +19,10 @@ import type {
   VehicleReceipt,
   VehicleReceiptUpsert,
   VehicleUpsert,
+  TrafficPlanRequest,
+  TrafficPlanResponse,
+  TrafficPlanSummary,
+  ChatAskResponse,
 } from "../types"
 
 export class ApiError extends Error {
@@ -83,6 +87,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     logger.error("Unhandled API request exception.", { error, path })
     throw new Error("Unexpected network error.")
   }
+}
+
+async function requestChat<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = storage.getToken()
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-Tenant-Code": TENANT_CODE,
+  }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${CHAT_API_BASE_URL}${path}`, {
+    ...init,
+    headers: { ...headers, ...(init?.headers as Record<string, string> | undefined) },
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new ApiError(text || `Chat request failed: ${res.status}`, res.status)
+  }
+
+  return (await res.json()) as T
 }
 
 export const api = {
@@ -259,4 +286,23 @@ export const api = {
       method: "DELETE",
     }),
   outstanding: () => request<ReportOutstanding[]>("/api/reports/outstanding"),
+  trafficPlan: (payload: TrafficPlanRequest) =>
+    request<TrafficPlanResponse>("/api/traffic/vehicle-placement/plan", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  trafficPlanList: (take = 50) =>
+    request<TrafficPlanSummary[]>(`/api/traffic/vehicle-placement/plans?take=${take}`),
+  trafficPlanById: (planId: string) =>
+    request<TrafficPlanResponse>(`/api/traffic/vehicle-placement/plan/${planId}`),
+  chatAsk: (message: string) =>
+    requestChat<ChatAskResponse>("/api/chat/ask", {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }),
 }
+
+
+
+
