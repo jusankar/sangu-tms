@@ -152,7 +152,8 @@ app.MapGet("/api/info", () => Results.Ok(new
         "GET /api/rbac/permissions",
         "GET /api/rbac/roles",
         "GET /api/rbac/users",
-        "POST /api/traffic/vehicle-placement/plan"
+        "POST /api/traffic/vehicle-placement/plan",
+        "GET /api/traffic/vehicle-tracking/{vehicleNumber}"
     }
 }));
 app.MapControllers();

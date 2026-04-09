@@ -63,6 +63,7 @@ type ConsignmentFormState = {
   advancePaid: string
   collectionCharge: string
   paymentBasis: string
+  paymentAt: string
   invoiceNo: string
   invoiceDate: string
   remarks: string
@@ -89,22 +90,21 @@ export function ConsignmentsPage() {
   }, [])
 
   const basicFreightCalculated = useMemo(
-    () => toAmount(form.packages) * toAmount(form.ratePerQuintal),
-    [form.packages, form.ratePerQuintal]
+    () => toAmount(form.chargedWeight) * toAmount(form.ratePerQuintal),
+    [form.chargedWeight, form.ratePerQuintal]
   )
-  const basicFreightEffective = basicFreightCalculated > 0 ? basicFreightCalculated : toAmount(form.basicFreight)
+  const basicFreightEffective = basicFreightCalculated
 
   const freightAmount = useMemo(() => {
-    const totalCharges =
+    return (
       basicFreightEffective +
       toAmount(form.stCharge) +
       toAmount(form.gstAmount) +
       toAmount(form.hamaliCharge) +
       toAmount(form.doorDeliveryCharge) +
       toAmount(form.collectionCharge)
-    return totalCharges - toAmount(form.advancePaid)
+    )
   }, [
-    form.advancePaid,
     basicFreightEffective,
     form.collectionCharge,
     form.doorDeliveryCharge,
@@ -205,6 +205,7 @@ export function ConsignmentsPage() {
       advancePaid: String(row.advancePaid ?? 0),
       collectionCharge: String(row.collectionCharge ?? 0),
       paymentBasis: row.paymentBasis || "To Pay",
+      paymentAt: row.paymentAt || "",
       invoiceNo: row.invoiceNo || "",
       invoiceDate: row.invoiceDate || "",
       remarks: row.remarks || "",
@@ -283,7 +284,7 @@ export function ConsignmentsPage() {
         <form onSubmit={onSubmit}>
           <div className="consignment-grid">
             <fieldset>
-              <legend>Booking And Parties</legend>
+              <legend>Booking Details</legend>
               <div className="consignment-fields">
                 <FormField label="Consignment No" required error={fieldErrors.consignmentNo}>
                   <Input
@@ -332,46 +333,6 @@ export function ConsignmentsPage() {
                     options={vehicles.map((v) => v.vehicleNumber)}
                     value={form.vehicleNo}
                     onChange={(e) => setForm((prev) => ({ ...prev, vehicleNo: e.target.value }))}
-                  />
-                </FormField>
-                <FormField label="Consignor" required error={fieldErrors.consignorName}>
-                  <TypeaheadInput
-                    listId="customer-name-options"
-                    options={customers.map((c) => c.name)}
-                    value={form.consignorName}
-                    onChange={(e) => onConsignorChange(e.target.value)}
-                  />
-                </FormField>
-                <FormField label="Consignee" required error={fieldErrors.consigneeName}>
-                  <TypeaheadInput
-                    listId="customer-name-options-ee"
-                    options={customers.map((c) => c.name)}
-                    value={form.consigneeName}
-                    onChange={(e) => onConsigneeChange(e.target.value)}
-                  />
-                </FormField>
-                <FormField label="Consignor Address" fullWidth>
-                  <Textarea
-                    value={form.consignorAddress}
-                    onChange={(e) => setForm((prev) => ({ ...prev, consignorAddress: e.target.value }))}
-                  />
-                </FormField>
-                <FormField label="Consignee Address" fullWidth>
-                  <Textarea
-                    value={form.consigneeAddress}
-                    onChange={(e) => setForm((prev) => ({ ...prev, consigneeAddress: e.target.value }))}
-                  />
-                </FormField>
-                <FormField label="Consignor GST">
-                  <Input
-                    value={form.consignorGstNo}
-                    onChange={(e) => setForm((prev) => ({ ...prev, consignorGstNo: e.target.value }))}
-                  />
-                </FormField>
-                <FormField label="Consignee GST">
-                  <Input
-                    value={form.consigneeGstNo}
-                    onChange={(e) => setForm((prev) => ({ ...prev, consigneeGstNo: e.target.value }))}
                   />
                 </FormField>
               </div>
@@ -425,6 +386,58 @@ export function ConsignmentsPage() {
             </fieldset>
 
             <fieldset>
+              <legend>Consignor</legend>
+              <div className="consignment-fields">
+                <FormField label="Consignor Name" required error={fieldErrors.consignorName}>
+                  <TypeaheadInput
+                    listId="customer-name-options"
+                    options={customers.map((c) => c.name)}
+                    value={form.consignorName}
+                    onChange={(e) => onConsignorChange(e.target.value)}
+                  />
+                </FormField>
+                <FormField label="Consignor GST">
+                  <Input
+                    value={form.consignorGstNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consignorGstNo: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Consignor Address" fullWidth>
+                  <Textarea
+                    value={form.consignorAddress}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consignorAddress: e.target.value }))}
+                  />
+                </FormField>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Consignee</legend>
+              <div className="consignment-fields">
+                <FormField label="Consignee Name" required error={fieldErrors.consigneeName}>
+                  <TypeaheadInput
+                    listId="customer-name-options-ee"
+                    options={customers.map((c) => c.name)}
+                    value={form.consigneeName}
+                    onChange={(e) => onConsigneeChange(e.target.value)}
+                  />
+                </FormField>
+                <FormField label="Consignee GST">
+                  <Input
+                    value={form.consigneeGstNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consigneeGstNo: e.target.value }))}
+                  />
+                </FormField>
+                <FormField label="Consignee Address" fullWidth>
+                  <Textarea
+                    value={form.consigneeAddress}
+                    onChange={(e) => setForm((prev) => ({ ...prev, consigneeAddress: e.target.value }))}
+                  />
+                </FormField>
+              </div>
+            </fieldset>
+
+            <fieldset>
               <legend>Goods And Weight</legend>
               <div className="consignment-fields">
                 <FormField label="Packages">
@@ -471,20 +484,18 @@ export function ConsignmentsPage() {
             </fieldset>
 
             <fieldset>
-              <legend>Charges And Billing</legend>
-              <div className="consignment-fields">
-                <FormField label="Basic Freight" required error={fieldErrors.basicFreight}>
+              <legend>Charges</legend>
+              <div className="consignment-fields consignment-amount-column">
+                <FormField label="Basic Freight" required error={fieldErrors.basicFreight} className="consignment-charge-row">
                   <Input
                     type="text"
                     inputMode="decimal"
-                    value={form.basicFreight}
-                    placeholder={basicFreightCalculated > 0 ? basicFreightCalculated.toFixed(2) : "0.00"}
-                    onChange={(e) => setForm((prev) => ({ ...prev, basicFreight: e.target.value }))}
-                    onBlur={() => setForm((prev) => ({ ...prev, basicFreight: format2(prev.basicFreight) }))}
-                    className="text-right"
+                    value={basicFreightEffective.toFixed(2)}
+                    readOnly
+                    className="text-right bg-muted"
                   />
                 </FormField>
-                <FormField label="S.T. Charge">
+                <FormField label="S.T. Charge" className="consignment-charge-row">
                   <Input
                     type="text"
                     inputMode="decimal"
@@ -494,7 +505,7 @@ export function ConsignmentsPage() {
                     className="text-right"
                   />
                 </FormField>
-                <FormField label="GST">
+                <FormField label="GST" className="consignment-charge-row">
                   <Input
                     type="text"
                     inputMode="decimal"
@@ -504,7 +515,7 @@ export function ConsignmentsPage() {
                     className="text-right"
                   />
                 </FormField>
-                <FormField label="Hamali">
+                <FormField label="Hamali" className="consignment-charge-row">
                   <Input
                     type="text"
                     inputMode="decimal"
@@ -514,7 +525,7 @@ export function ConsignmentsPage() {
                     className="text-right"
                   />
                 </FormField>
-                <FormField label="Door Delivery Charge">
+                <FormField label="Door Delivery Charge" className="consignment-charge-row">
                   <Input
                     type="text"
                     inputMode="decimal"
@@ -524,7 +535,7 @@ export function ConsignmentsPage() {
                     className="text-right"
                   />
                 </FormField>
-                <FormField label="Collection Charge">
+                <FormField label="Collection Charge" className="consignment-charge-row">
                   <Input
                     type="text"
                     inputMode="decimal"
@@ -534,43 +545,31 @@ export function ConsignmentsPage() {
                     className="text-right"
                   />
                 </FormField>
-                <FormField label="Advance Paid">
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={form.advancePaid}
-                    onChange={(e) => setForm((prev) => ({ ...prev, advancePaid: e.target.value }))}
-                    onBlur={() => setForm((prev) => ({ ...prev, advancePaid: format2(prev.advancePaid) }))}
-                    className="text-right"
-                  />
-                </FormField>
-                <FormField label="Payment Basis">
-                  <Select value={form.paymentBasis} onValueChange={(v) => setForm((prev) => ({ ...prev, paymentBasis: v }))}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="To Pay">To Pay</SelectItem>
-                      <SelectItem value="To Be Billed">To Be Billed</SelectItem>
-                      <SelectItem value="Paid">Paid</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormField>
-                <FormField label="Invoice No">
-                  <Input
-                    value={form.invoiceNo}
-                    onChange={(e) => setForm((prev) => ({ ...prev, invoiceNo: e.target.value }))}
-                  />
-                </FormField>
-                <FormField label="Invoice Date">
-                  <DatePicker
-                    value={form.invoiceDate}
-                    onChange={(value) => setForm((prev) => ({ ...prev, invoiceDate: value }))}
-                  />
-                </FormField>
-                <FormField label="Final Freight">
+                <FormField label="Final Freight" className="consignment-charge-row">
                   <Input value={freightAmount.toFixed(2)} readOnly className="text-right bg-muted" />
                 </FormField>
+                <div className="consignment-payment-row">
+                  <FormField label="Payment Basis">
+                    <Select value={form.paymentBasis} onValueChange={(v) => setForm((prev) => ({ ...prev, paymentBasis: v }))}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="To Pay">To Pay</SelectItem>
+                        <SelectItem value="To Be Billed">To Be Billed</SelectItem>
+                        <SelectItem value="Paid">Paid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                  <FormField label="Payment At (Location)">
+                    <TypeaheadInput
+                      listId="payment-at-branch-options"
+                      options={branches.map((b) => `${b.code} - ${b.name}`)}
+                      value={form.paymentAt}
+                      onChange={(e) => setForm((prev) => ({ ...prev, paymentAt: e.target.value }))}
+                    />
+                  </FormField>
+                </div>
                 <FormField label="Remarks" fullWidth>
                   <Textarea
                     value={form.remarks}
@@ -679,6 +678,7 @@ function emptyForm(): ConsignmentFormState {
     advancePaid: "0.00",
     collectionCharge: "0.00",
     paymentBasis: "To Pay",
+    paymentAt: "",
     invoiceNo: "",
     invoiceDate: "",
     remarks: "",
@@ -706,7 +706,7 @@ function validateConsignmentForm(
   if (!form.vehicleNo.trim()) errors.vehicleNo = "Vehicle Number is mandatory."
   if (!form.consignorName.trim()) errors.consignorName = "Consignor is mandatory."
   if (!form.consigneeName.trim()) errors.consigneeName = "Consignee is mandatory."
-  if ((toAmount(form.packages) * toAmount(form.ratePerQuintal) <= 0) && toAmount(form.basicFreight) <= 0) {
+  if (toAmount(form.chargedWeight) * toAmount(form.ratePerQuintal) <= 0) {
     errors.basicFreight = "Basic Freight should be greater than zero."
   }
   if (!fromLocationId) errors.fromLocationName = "Select a valid From location."
@@ -751,11 +751,12 @@ function toPayload(
     gstAmount: toAmount(form.gstAmount),
     hamaliCharge: toAmount(form.hamaliCharge),
     doorDeliveryCharge: toAmount(form.doorDeliveryCharge),
-    advancePaid: toAmount(form.advancePaid),
+    advancePaid: 0,
     collectionCharge: toAmount(form.collectionCharge),
     paymentBasis: form.paymentBasis,
-    invoiceNo: form.invoiceNo.trim(),
-    invoiceDate: form.invoiceDate || undefined,
+    paymentAt: form.paymentAt.trim(),
+    invoiceNo: "",
+    invoiceDate: undefined,
     freightAmount,
     remarks: form.remarks.trim(),
   }

@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react"
 import { api } from "../lib/api"
-import { Link, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 import type {
   TrafficMaterial,
   TrafficPlanResponse,
@@ -37,6 +37,7 @@ export function TrafficVehiclePlacementPage() {
   const [planPage, setPlanPage] = useState(1)
   const [plans, setPlans] = useState([] as { planId: string; recommendedTrailerType: string; totalTrailers: number; mode: string; createdAt: string }[])
   const pageSize = 8
+  const [selectedTrailerIndex, setSelectedTrailerIndex] = useState(0)
 
   const [searchParams] = useSearchParams()
 
@@ -79,6 +80,10 @@ export function TrafficVehiclePlacementPage() {
 
   const totalMaterialCount = useMemo(
     () => materials.reduce((sum, item) => sum + (Number.isFinite(item.qty) ? item.qty : 0), 0),
+    [materials]
+  )
+  const materialLookup = useMemo(
+    () => new Map(materials.map((m) => [m.id, m])),
     [materials]
   )
 
@@ -154,6 +159,7 @@ export function TrafficVehiclePlacementPage() {
         allowStacking,
       })
       setResult(normalizePlan(response))
+      setSelectedTrailerIndex(0)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate plan")
     } finally {
@@ -208,9 +214,6 @@ export function TrafficVehiclePlacementPage() {
           </Button>
           <Button type="button" variant="outline" onClick={exportPdf} disabled={!result}>
             Export PDF
-          </Button>
-          <Button asChild variant="ghost">
-            <Link to="/traffic/vehicle-placement/history">History</Link>
           </Button>
           <Button type="button" onClick={onPlan} disabled={loading}>
             {loading ? "Planning..." : "Calculate Trailer Plan"}
@@ -283,6 +286,7 @@ export function TrafficVehiclePlacementPage() {
                     try {
                       const loaded = await api.trafficPlanById(plan.planId)
                       setResult(normalizePlan(loaded))
+                      setSelectedTrailerIndex(0)
                       setPlanDrawerOpen(false)
                     } catch (err) {
                       setError(err instanceof Error ? err.message : "Failed to load plan")
@@ -427,7 +431,13 @@ export function TrafficVehiclePlacementPage() {
               )}
               <div className="traffic-trailer-list">
                 {result.trailers.map((trailer, idx) => (
-                  <TrailerCard key={`${trailer.trailerType}-${idx}`} trailer={trailer} index={idx + 1} />
+                  <TrailerCard
+                    key={`${trailer.trailerType}-${idx}`}
+                    trailer={trailer}
+                    index={idx + 1}
+                    active={idx === selectedTrailerIndex}
+                    onSelect={() => setSelectedTrailerIndex(idx)}
+                  />
                 ))}
               </div>
             </>
@@ -439,9 +449,11 @@ export function TrafficVehiclePlacementPage() {
           <h3>3D Preview</h3>
           {result ? (
             <div className="traffic-stage">
-              {result.trailers.slice(0, 1).map((trailer, idx) => (
-                <TrafficPreview3D key={idx} trailer={trailer} />
-              ))}
+              <TrafficPreview3D
+                key={selectedTrailerIndex}
+                trailer={result.trailers[Math.max(0, Math.min(selectedTrailerIndex, result.trailers.length - 1))]}
+                materialLookup={materialLookup}
+              />
             </div>
           ) : (
             <div className="traffic-empty">Preview appears after planning.</div>
@@ -452,9 +464,19 @@ export function TrafficVehiclePlacementPage() {
   )
 }
 
-function TrailerCard({ trailer, index }: { trailer: TrafficTrailerPlan; index: number }) {
+function TrailerCard({
+  trailer,
+  index,
+  active,
+  onSelect,
+}: {
+  trailer: TrafficTrailerPlan
+  index: number
+  active: boolean
+  onSelect: () => void
+}) {
   return (
-    <div className="traffic-card">
+    <button type="button" className={active ? "traffic-card active" : "traffic-card"} onClick={onSelect}>
       <div className="traffic-card-header">
         <strong>Trailer {index}</strong>
         <span>{trailer.trailerType}</span>
@@ -469,11 +491,17 @@ function TrailerCard({ trailer, index }: { trailer: TrafficTrailerPlan; index: n
           ))}
         </ul>
       </div>
-    </div>
+    </button>
   )
 }
 
-function TrafficPreview3D({ trailer }: { trailer: TrafficTrailerPlan }) {
+function TrafficPreview3D({
+  trailer,
+  materialLookup,
+}: {
+  trailer: TrafficTrailerPlan
+  materialLookup: Map<string, TrafficMaterial>
+}) {
   const mountRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -547,7 +575,8 @@ function TrafficPreview3D({ trailer }: { trailer: TrafficTrailerPlan }) {
     floor.position.set(trailer.trailerLength / 2, trailer.trailerWidth / 2, 0)
     trailerGroup.add(floor)
 
-    trailer.placements.forEach((placement) => {
+    const placements = resolvePlacementsForPreview(trailer, materialLookup)
+    placements.forEach((placement) => {
       const cube = new THREE.Mesh(
         new THREE.BoxGeometry(placement.length, placement.width, placement.height),
         new THREE.MeshStandardMaterial({
@@ -590,9 +619,75 @@ function TrafficPreview3D({ trailer }: { trailer: TrafficTrailerPlan }) {
       renderer.dispose()
       frame.dispose()
     }
-  }, [trailer])
+  }, [trailer, materialLookup])
 
   return <div className="traffic-preview-3d" ref={mountRef} />
+}
+
+function resolvePlacementsForPreview(
+  trailer: TrafficTrailerPlan,
+  materialLookup: Map<string, TrafficMaterial>
+) {
+  if (trailer.placements.length > 0) {
+    return trailer.placements
+  }
+
+  const generated: Array<{
+    materialId: string
+    x: number
+    y: number
+    z: number
+    length: number
+    width: number
+    height: number
+  }> = []
+
+  let cursorX = 0.15
+  let cursorY = 0.15
+  let rowDepth = 0
+  const maxX = Math.max(0.2, trailer.trailerLength - 0.15)
+  const maxY = Math.max(0.2, trailer.trailerWidth - 0.15)
+
+  for (const item of trailer.items) {
+    const material = materialLookup.get(item.materialId)
+    if (!material) continue
+
+    const boxL = Math.max(0.2, material.length)
+    const boxW = Math.max(0.2, material.width)
+    const boxH = Math.max(0.2, material.height)
+    const stackCount = Math.max(1, item.stackCount || 1)
+    const groups = Math.max(1, Math.ceil(item.quantity / stackCount))
+
+    for (let g = 0; g < groups; g += 1) {
+      if (cursorX + boxL > maxX) {
+        cursorX = 0.15
+        cursorY += rowDepth + 0.12
+        rowDepth = 0
+      }
+
+      if (cursorY + boxW > maxY) {
+        cursorY = 0.15
+      }
+
+      const thisStack = Math.min(stackCount, item.quantity - (g * stackCount))
+      for (let s = 0; s < thisStack; s += 1) {
+        generated.push({
+          materialId: item.materialId,
+          x: cursorX,
+          y: cursorY,
+          z: s * boxH,
+          length: boxL,
+          width: boxW,
+          height: boxH,
+        })
+      }
+
+      cursorX += boxL + 0.12
+      rowDepth = Math.max(rowDepth, boxW)
+    }
+  }
+
+  return generated
 }
 
 function colorFromId(value: string) {

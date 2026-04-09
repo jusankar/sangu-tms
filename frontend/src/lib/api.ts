@@ -23,6 +23,7 @@ import type {
   TrafficPlanResponse,
   TrafficPlanSummary,
   ChatAskResponse,
+  VehicleTrackingData,
 } from "../types"
 
 export class ApiError extends Error {
@@ -296,6 +297,8 @@ export const api = {
     request<TrafficPlanSummary[]>(`/api/traffic/vehicle-placement/plans?take=${take}`),
   trafficPlanById: (planId: string) =>
     request<TrafficPlanResponse>(`/api/traffic/vehicle-placement/plan/${planId}`),
+  vehicleTracking: (vehicleNumber: string) =>
+    request<VehicleTrackingData>(`/api/traffic/vehicle-tracking/${encodeURIComponent(vehicleNumber)}`),
   chatAsk: (message: string) =>
     requestChat<ChatAskResponse>("/api/chat/ask", {
       method: "POST",

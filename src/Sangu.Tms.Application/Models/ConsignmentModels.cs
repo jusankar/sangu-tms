@@ -31,6 +31,7 @@ public sealed class ConsignmentUpsertModel
     public decimal AdvancePaid { get; set; }
     public decimal CollectionCharge { get; set; }
     public string? PaymentBasis { get; set; }
+    public string? PaymentAt { get; set; }
     public string? InvoiceNo { get; set; }
     public DateOnly? InvoiceDate { get; set; }
     public decimal FreightAmount { get; set; }
@@ -69,6 +70,7 @@ public sealed class ConsignmentViewModel
     public decimal AdvancePaid { get; set; }
     public decimal CollectionCharge { get; set; }
     public string? PaymentBasis { get; set; }
+    public string? PaymentAt { get; set; }
     public string? InvoiceNo { get; set; }
     public DateOnly? InvoiceDate { get; set; }
     public decimal FreightAmount { get; set; }

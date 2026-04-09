@@ -102,6 +102,7 @@ public sealed class SanguTmsDbContext : DbContext
             entity.Property(x => x.AdvancePaid).HasColumnName("advance_paid");
             entity.Property(x => x.CollectionCharge).HasColumnName("collection_charge");
             entity.Property(x => x.PaymentBasis).HasColumnName("payment_basis");
+            entity.Property(x => x.PaymentAt).HasColumnName("payment_at");
             entity.Property(x => x.InvoiceNo).HasColumnName("invoice_no");
             entity.Property(x => x.InvoiceDate).HasColumnName("invoice_date");
             entity.Property(x => x.FreightAmount).HasColumnName("freight_amount");
@@ -376,6 +377,7 @@ public sealed class ConsignmentRecord
     public decimal AdvancePaid { get; set; }
     public decimal CollectionCharge { get; set; }
     public string? PaymentBasis { get; set; }
+    public string? PaymentAt { get; set; }
     public string? InvoiceNo { get; set; }
     public DateOnly? InvoiceDate { get; set; }
     public decimal FreightAmount { get; set; }

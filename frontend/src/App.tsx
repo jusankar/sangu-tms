@@ -17,7 +17,7 @@ import { PaymentReportPage } from "./pages/PaymentReportPage"
 import { VehicleReceiptsPage } from "./pages/VehicleReceiptsPage"
 import { VehicleStatementReportPage } from "./pages/VehicleStatementReportPage"
 import { TrafficVehiclePlacementPage } from "./pages/TrafficVehiclePlacementPage"
-import { TrafficPlanHistoryPage } from "./pages/TrafficPlanHistoryPage"
+import { TrafficVehicleTrackingPage } from "./pages/TrafficVehicleTrackingPage"
 import { VehiclesPage } from "./pages/VehiclesPage"
 
 function App() {
@@ -44,7 +44,7 @@ function App() {
           <Route path="/reports/outstanding" element={<OutstandingPage />} />
           <Route path="/reports/payment" element={<PaymentReportPage />} />
           <Route path="/traffic/vehicle-placement" element={<TrafficVehiclePlacementPage />} />
-          <Route path="/traffic/vehicle-placement/history" element={<TrafficPlanHistoryPage />} />
+          <Route path="/traffic/vehicle-tracking" element={<TrafficVehicleTrackingPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

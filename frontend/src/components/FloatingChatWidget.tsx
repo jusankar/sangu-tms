@@ -14,6 +14,8 @@ const starterPrompts = [
   "Lorry hire amount for challan number CH-001",
   "Booking amount for consignment number CN-10025",
   "Payment details for invoice INV-1045",
+  "Vehicle number for challan number CH-001",
+  "Amount deducted in invoice INV-1045",
 ]
 
 export function FloatingChatWidget() {
@@ -24,7 +26,7 @@ export function FloatingChatWidget() {
     {
       id: 1,
       role: "assistant",
-      text: "Read-only finance assistant is ready. Ask customer outstanding, booking, lorry hire, or invoice payment details.",
+      text: "Read-only assistant is ready. Ask customer outstanding, booking, lorry hire, or invoice payment details and any details.",
     },
   ])
 
@@ -73,8 +75,8 @@ export function FloatingChatWidget() {
         <section className="floating-chat-panel" aria-label="Sangu chat">
           <header className="floating-chat-header">
             <div>
-              <strong>Sangu Chat</strong>
-              <p>Read-only database assistant</p>
+              <strong>Sangu Chat Assistant</strong>
+              <p>Ask anything, any time.</p>
             </div>
             <button
               type="button"

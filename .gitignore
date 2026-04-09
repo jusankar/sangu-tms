@@ -48,3 +48,4 @@ _tmp_doc.zip
 # Docker
 **/.docker/
 .env
+frontend/.env

@@ -123,6 +123,7 @@ create table if not exists consignments (
   advance_paid numeric(14,2) not null default 0,
   collection_charge numeric(14,2) not null default 0,
   payment_basis varchar(40),
+  payment_at varchar(120),
   invoice_no varchar(40),
   invoice_date date,
   freight_amount numeric(14,2) not null default 0,

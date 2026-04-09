@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from "react"
 import { api } from "../lib/api"
-import type { Invoice, VehicleReceipt } from "../types"
+import type { Consignment, Invoice, VehicleReceipt } from "../types"
 
-type WeekPoint = { label: string; bookings: number; part: number; balance: number }
+type WeekPoint = {
+  label: string
+  range: string
+  bookings: number
+  bookingAmount: number
+  receiptCount: number
+  part: number
+  balance: number
+}
 
 export function DashboardPage() {
   const [bookingRows, setBookingRows] = useState(0)
@@ -50,8 +58,13 @@ export function DashboardPage() {
   }
 
   const maxBookings = Math.max(...weekly.map((x) => x.bookings), 1)
+  const maxBookingAmount = Math.max(...weekly.map((x) => x.bookingAmount), 1)
   const maxPayment = Math.max(...weekly.flatMap((x) => [x.part, x.balance]), 1)
   const totalSplit = Math.max(statusSplit.paid + statusSplit.partial + statusSplit.pending, 1)
+  const totalBookingAmount = weekly.reduce((sum, x) => sum + x.bookingAmount, 0)
+  const totalPaymentPart = weekly.reduce((sum, x) => sum + x.part, 0)
+  const totalPaymentBalance = weekly.reduce((sum, x) => sum + x.balance, 0)
+  const latestWeek = weekly[weekly.length - 1]
 
   const splitLabels = useMemo(
     () => [
@@ -96,27 +109,62 @@ export function DashboardPage() {
       <div className="dashboard-chart-grid">
         <article className="panel chart-panel">
           <h3>Bookings Trend</h3>
+          <div className="chart-metrics">
+            <div>
+              <span>Total Bookings (7 weeks)</span>
+              <strong>{weekly.reduce((sum, x) => sum + x.bookings, 0)}</strong>
+            </div>
+            <div>
+              <span>Total Booking Value</span>
+              <strong>Rs. {totalBookingAmount.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span>This Week</span>
+              <strong>
+                {latestWeek?.bookings ?? 0} bookings | Rs. {(latestWeek?.bookingAmount ?? 0).toFixed(2)}
+              </strong>
+            </div>
+          </div>
           <div className="bar-chart">
             {weekly.map((value) => (
-              <div className="bar-wrap" key={value.label}>
-                <div className="bar bar-booking" style={{ height: `${(value.bookings / maxBookings) * 100}%` }} />
+              <div className="bar-wrap" key={value.label} title={`${value.range}\nBookings: ${value.bookings}\nValue: Rs. ${value.bookingAmount.toFixed(2)}`}>
+                <div className="bar-caption">{value.bookings}</div>
+                <div className="bar bar-booking" style={{ height: `${(value.bookings / maxBookings) * 62}%` }} />
+                <div className="bar bar-booking-value" style={{ height: `${(value.bookingAmount / maxBookingAmount) * 38}%` }} />
                 <span>{value.label}</span>
               </div>
             ))}
           </div>
+          <small className="chart-note">Dark gold = booking count, light gold = booking value intensity.</small>
         </article>
 
         <article className="panel chart-panel">
           <h3>Vehicle Payments</h3>
+          <div className="chart-metrics">
+            <div>
+              <span>Advance Paid (7 weeks)</span>
+              <strong>Rs. {totalPaymentPart.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span>Balance Pending (7 weeks)</span>
+              <strong>Rs. {totalPaymentBalance.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span>This Week Receipts</span>
+              <strong>{latestWeek?.receiptCount ?? 0}</strong>
+            </div>
+          </div>
           <div className="bar-chart dual">
             {weekly.map((value) => (
-              <div className="bar-wrap dual" key={`pay-${value.label}`}>
+              <div className="bar-wrap dual" key={`pay-${value.label}`} title={`${value.range}\nAdvance: Rs. ${value.part.toFixed(2)}\nBalance: Rs. ${value.balance.toFixed(2)}\nReceipts: ${value.receiptCount}`}>
+                <div className="bar-caption">Rs. {(value.part + value.balance).toFixed(0)}</div>
                 <div className="bar bar-part" style={{ height: `${(value.part / maxPayment) * 100}%` }} />
                 <div className="bar bar-balance" style={{ height: `${(value.balance / maxPayment) * 100}%` }} />
                 <span>{value.label}</span>
               </div>
             ))}
           </div>
+          <small className="chart-note">Red = advance paid, blue = remaining balance.</small>
         </article>
 
         <article className="panel chart-panel">
@@ -146,7 +194,7 @@ function getWeekStart(date: Date): Date {
   return next
 }
 
-function buildWeeklyTrend(consignments: Array<{ bookingDate: string }>, receipts: VehicleReceipt[]): WeekPoint[] {
+function buildWeeklyTrend(consignments: Consignment[], receipts: VehicleReceipt[]): WeekPoint[] {
   const points: WeekPoint[] = []
   const now = new Date()
   const currentWeek = getWeekStart(now)
@@ -161,7 +209,8 @@ function buildWeeklyTrend(consignments: Array<{ bookingDate: string }>, receipts
     const bookings = consignments.filter((x) => {
       const d = new Date(x.bookingDate)
       return d >= weekStart && d <= weekEnd
-    }).length
+    })
+    const bookingAmount = bookings.reduce((sum, row) => sum + (row.freightAmount || 0), 0)
     const weekReceipts = receipts.filter((x) => {
       const d = new Date(x.challanDate)
       return d >= weekStart && d <= weekEnd
@@ -171,13 +220,20 @@ function buildWeeklyTrend(consignments: Array<{ bookingDate: string }>, receipts
 
     points.push({
       label: `W${7 - i}`,
-      bookings,
+      range: `${formatShortDate(weekStart)} - ${formatShortDate(weekEnd)}`,
+      bookings: bookings.length,
+      bookingAmount,
+      receiptCount: weekReceipts.length,
       part,
       balance,
     })
   }
 
   return points
+}
+
+function formatShortDate(date: Date) {
+  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`
 }
 
 function buildStatusSplit(invoices: Invoice[]): { paid: number; partial: number; pending: number } {

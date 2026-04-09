@@ -367,6 +367,11 @@ body {
   margin-top: 0;
 }
 
+.content-inner h2 {
+  text-align: left;
+  font-weight: 800;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(140px, 1fr));
@@ -529,6 +534,40 @@ body {
   min-width: 0;
 }
 
+.consignment-fields.consignment-amount-column {
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-items: stretch;
+}
+
+.consignment-fields.consignment-amount-column > * {
+  grid-column: 1 / -1;
+}
+
+.consignment-payment-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.consignment-charge-row {
+  display: grid !important;
+  grid-template-columns: 190px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 0;
+  align-items: center;
+}
+
+.consignment-charge-row > label {
+  margin: 0;
+}
+
+.consignment-charge-row > input,
+.consignment-charge-row > textarea,
+.consignment-charge-row > .select-trigger,
+.consignment-charge-row > div {
+  min-width: 0;
+}
+
 .consignment-wide {
   grid-column: 1 / -1;
 }
@@ -670,6 +709,24 @@ input[inputmode="numeric"],
   margin: 0 0 10px;
 }
 
+.chart-metrics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.chart-metrics span {
+  font-size: 0.74rem;
+  color: var(--text-soft);
+}
+
+.chart-metrics strong {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
 .bar-chart {
   height: 220px;
   display: flex;
@@ -682,6 +739,12 @@ input[inputmode="numeric"],
   display: grid;
   gap: 6px;
   justify-items: center;
+}
+
+.bar-caption {
+  font-size: 0.7rem;
+  color: var(--text-soft);
+  font-weight: 700;
 }
 
 .bar-wrap span {
@@ -699,6 +762,10 @@ input[inputmode="numeric"],
   background: linear-gradient(180deg, #f7cc3f, #db9d06);
 }
 
+.bar-booking-value {
+  background: linear-gradient(180deg, #fce58a, #f4c43a);
+}
+
 .bar-chart.dual {
   gap: 14px;
 }
@@ -713,6 +780,13 @@ input[inputmode="numeric"],
 
 .bar-balance {
   background: linear-gradient(180deg, #2f7de3, #0d4ba7);
+}
+
+.chart-note {
+  margin-top: 8px;
+  display: block;
+  color: var(--text-soft);
+  font-size: 0.75rem;
 }
 
 .donut-card {
@@ -817,8 +891,29 @@ input[inputmode="numeric"],
   color: var(--text-main);
 }
 
+.lorry-lines-table th.numeric-cell,
+.lorry-lines-table td.numeric-cell {
+  text-align: right !important;
+}
+
 .lorry-hire-row {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.consignment-fields.lorry-hire-column {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.consignment-fields.lorry-hire-column > * {
+  grid-column: 1 / -1;
+}
+
+.lorry-hire-spacer {
+  min-height: 1px;
+}
+
+.lorry-header-spacer {
+  min-height: 1px;
 }
 
 .lr-col-compact {
@@ -874,8 +969,24 @@ input[inputmode="numeric"],
     grid-template-columns: 1fr;
   }
 
+  .lorry-hire-spacer {
+    display: none;
+  }
+
+  .lorry-header-spacer {
+    display: none;
+  }
+
   .consignment-fields {
     grid-template-columns: 1fr;
+  }
+
+  .consignment-payment-row {
+    grid-template-columns: 1fr;
+  }
+
+  .consignment-charge-row {
+    grid-template-columns: 150px minmax(0, 1fr);
   }
 
   .module-form {
@@ -1032,8 +1143,12 @@ input[inputmode="numeric"],
 
 .traffic-card {
   background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 14px;
   padding: 12px 14px;
+  text-align: left;
+  color: #f8fafc;
+  cursor: pointer;
 }
 
 .traffic-card-header {
@@ -1049,6 +1164,11 @@ input[inputmode="numeric"],
   list-style: none;
   display: grid;
   gap: 4px;
+}
+
+.traffic-card.active {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3), 0 12px 24px rgba(2, 132, 199, 0.22);
 }
 
 .traffic-empty {
@@ -1138,7 +1258,7 @@ input[inputmode="numeric"],
 
 .traffic-history-table .traffic-row span {
   font-size: 0.9rem;
-  color: #e2e8f0;
+  color: var(--text-main);
 }
 
 
@@ -1183,6 +1303,11 @@ input[inputmode="numeric"],
   grid-template-columns: 1.4fr 1fr 0.6fr 0.6fr 0.7fr;
 }
 
+.traffic-drawer-table .traffic-row span,
+.traffic-drawer-table .traffic-head span {
+  color: #e2e8f0;
+}
+
 .traffic-history-controls {
   display: flex;
   justify-content: space-between;
@@ -1196,6 +1321,123 @@ input[inputmode="numeric"],
   .traffic-history-controls {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+.vehicle-tracking-page {
+  display: grid;
+  gap: 16px;
+}
+
+.vehicle-tracking-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vehicle-tracking-header h2 {
+  margin: 0 0 6px;
+}
+
+.vehicle-tracking-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.vehicle-track-select {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-radius: 10px;
+  min-width: 210px;
+  padding: 8px 10px;
+}
+
+.vehicle-tracking-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr;
+  gap: 16px;
+}
+
+.vehicle-tracking-map,
+.vehicle-tracking-info {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--bg-card) 95%, var(--brand)), var(--bg-card));
+}
+
+.tracking-map-canvas {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tracking-map-leaflet-host {
+  width: 100%;
+  height: 520px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.tracking-truck-icon {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.vehicle-tracking-info h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.vehicle-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.vehicle-kpi {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 10px;
+}
+
+.vehicle-kpi span {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.vehicle-kpi strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  word-break: break-word;
+}
+
+.vehicle-route-summary {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--bg-soft);
+}
+
+.vehicle-route-summary p {
+  margin: 6px 0 0;
+}
+
+@media (max-width: 980px) {
+  .vehicle-tracking-grid {
+    grid-template-columns: 1fr;
+  }
+  .vehicle-tracking-actions {
+    width: 100%;
   }
 }
 

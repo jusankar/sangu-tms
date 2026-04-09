@@ -52,7 +52,7 @@ const menuGroups = [
     title: "Traffic",
     items: [
       { to: "/traffic/vehicle-placement", label: "Vehicle Placement", icon: LayersIcon },
-      { to: "/traffic/vehicle-placement/history", label: "Load Previous Plan", icon: ArchiveIcon },
+      { to: "/traffic/vehicle-tracking", label: "Vehicle Tracking", icon: MagnifyingGlassIcon },
     ],
   },  {
     title: "Reports",

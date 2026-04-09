@@ -216,7 +216,7 @@ export function VehicleReceiptsPage() {
       {tab === "form" ? (
         <form onSubmit={onSubmit}>
           <div className="consignment-grid">
-            <fieldset className="consignment-wide">
+            <fieldset>
               <legend>Header Details</legend>
               <div className="consignment-fields">
                 <FormField label="Lorry Receipt No" required error={fieldErrors.challanNo}>
@@ -239,12 +239,19 @@ export function VehicleReceiptsPage() {
                 <FormField label="Date" required error={fieldErrors.challanDate}>
                   <DatePicker value={form.challanDate} onChange={(value) => setForm((prev) => ({ ...prev, challanDate: value }))} />
                 </FormField>
+                <div className="lorry-header-spacer" aria-hidden="true" />
                 <FormField label="From" required error={fieldErrors.fromLocationRef}>
                   <TypeaheadInput listId="location-from-options" options={locations.map((l) => toLocationRefValue(l))} value={form.fromLocationRef} onChange={(e) => setForm((prev) => ({ ...prev, fromLocationRef: e.target.value }))} />
                 </FormField>
                 <FormField label="To" required error={fieldErrors.toLocationRef}>
                   <TypeaheadInput listId="location-to-options" options={locations.map((l) => toLocationRefValue(l))} value={form.toLocationRef} onChange={(e) => setForm((prev) => ({ ...prev, toLocationRef: e.target.value }))} />
                 </FormField>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Header Details</legend>
+              <div className="consignment-fields">
                 <FormField label="Owner Name">
                   <Input value={form.ownerName} onChange={(e) => setForm((prev) => ({ ...prev, ownerName: e.target.value }))} />
                 </FormField>
@@ -278,8 +285,8 @@ export function VehicleReceiptsPage() {
                 <tr>
                   <th>Consignment Number</th>
                   <th>Description</th>
-                  <th>Pkg.</th>
-                  <th>Weight Kgs</th>
+                  <th className="numeric-cell">Pkg.</th>
+                  <th className="numeric-cell">Weight (3 Decimals)</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -292,10 +299,10 @@ export function VehicleReceiptsPage() {
                     <td>
                       <Input className="lr-col-wide w-full" value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} />
                     </td>
-                    <td>
+                    <td className="numeric-cell">
                       <Input className="text-right w-full" value={line.packages} onChange={(e) => updateLine(idx, { packages: e.target.value })} />
                     </td>
-                    <td>
+                    <td className="numeric-cell">
                       <Input className="text-right w-full" value={line.weightKg} onChange={(e) => updateLine(idx, { weightKg: e.target.value })} />
                     </td>
                     <td>
@@ -310,8 +317,8 @@ export function VehicleReceiptsPage() {
                 <tr>
                   <td />
                   <td><strong>Total</strong></td>
-                  <td><strong>{totalPkg.toFixed(0)}</strong></td>
-                  <td><strong>{totalWeight.toFixed(3)}</strong></td>
+                  <td className="numeric-cell"><strong>{totalPkg.toFixed(0)}</strong></td>
+                  <td className="numeric-cell"><strong>{totalWeight.toFixed(3)}</strong></td>
                   <td />
                 </tr>
               </tfoot>
@@ -324,23 +331,26 @@ export function VehicleReceiptsPage() {
             </div>
           </fieldset>
 
-          <fieldset style={{ marginTop: 12 }}>
-            <legend>Freight And Hire</legend>
-            <div className="consignment-fields lorry-hire-row">
-              <FormField label="Lorry Hire" required error={fieldErrors.totalHire}>
-                <Input className="text-right" value={form.totalHire} onChange={(e) => setForm((prev) => ({ ...prev, totalHire: e.target.value }))} onBlur={() => setForm((prev) => ({ ...prev, totalHire: toAmount(prev.totalHire).toFixed(2) }))} />
-              </FormField>
-              <FormField label="Advance">
-                <Input className="text-right" value={form.advanceAmount} onChange={(e) => setForm((prev) => ({ ...prev, advanceAmount: e.target.value }))} onBlur={() => setForm((prev) => ({ ...prev, advanceAmount: toAmount(prev.advanceAmount).toFixed(2) }))} />
-              </FormField>
-              <FormField label="Balance">
-                <Input className="text-right bg-muted" value={balanceAmount.toFixed(2)} readOnly />
-              </FormField>
-              <FormField label="Balance At (Location)">
-                <TypeaheadInput listId="balance-at-options" options={locations.map((l) => toLocationRefValue(l))} value={form.balanceAt} onChange={(e) => setForm((prev) => ({ ...prev, balanceAt: e.target.value }))} />
-              </FormField>
-            </div>
-          </fieldset>
+          <div className="consignment-grid lorry-hire-left-wrap" style={{ marginTop: 12 }}>
+            <div className="lorry-hire-spacer" />
+            <fieldset>
+              <legend>Freight And Hire</legend>
+              <div className="consignment-fields lorry-hire-row lorry-hire-column">
+                <FormField label="Lorry Hire" required error={fieldErrors.totalHire} className="consignment-charge-row">
+                  <Input className="text-right" value={form.totalHire} onChange={(e) => setForm((prev) => ({ ...prev, totalHire: e.target.value }))} onBlur={() => setForm((prev) => ({ ...prev, totalHire: toAmount(prev.totalHire).toFixed(2) }))} />
+                </FormField>
+                <FormField label="Advance" className="consignment-charge-row">
+                  <Input className="text-right" value={form.advanceAmount} onChange={(e) => setForm((prev) => ({ ...prev, advanceAmount: e.target.value }))} onBlur={() => setForm((prev) => ({ ...prev, advanceAmount: toAmount(prev.advanceAmount).toFixed(2) }))} />
+                </FormField>
+                <FormField label="Balance" className="consignment-charge-row">
+                  <Input className="text-right bg-muted" value={balanceAmount.toFixed(2)} readOnly />
+                </FormField>
+                <FormField label="Balance At (Location)" className="consignment-charge-row">
+                  <TypeaheadInput listId="balance-at-options" options={branches.map((b) => `${b.code} - ${b.name}`)} value={form.balanceAt} onChange={(e) => setForm((prev) => ({ ...prev, balanceAt: e.target.value }))} />
+                </FormField>
+              </div>
+            </fieldset>
+          </div>
 
           <div className="consignment-actions" style={{ marginTop: 12 }}>
             <Button type="submit" disabled={loading}>

@@ -76,6 +76,7 @@ public sealed class PostgresConsignmentService : IConsignmentService
             AdvancePaid = model.AdvancePaid,
             CollectionCharge = model.CollectionCharge,
             PaymentBasis = model.PaymentBasis?.Trim(),
+            PaymentAt = model.PaymentAt?.Trim(),
             InvoiceNo = model.InvoiceNo?.Trim(),
             InvoiceDate = model.InvoiceDate,
             FreightAmount = model.FreightAmount,
@@ -134,6 +135,7 @@ public sealed class PostgresConsignmentService : IConsignmentService
         row.AdvancePaid = model.AdvancePaid;
         row.CollectionCharge = model.CollectionCharge;
         row.PaymentBasis = model.PaymentBasis?.Trim();
+        row.PaymentAt = model.PaymentAt?.Trim();
         row.InvoiceNo = model.InvoiceNo?.Trim();
         row.InvoiceDate = model.InvoiceDate;
         row.FreightAmount = model.FreightAmount;
@@ -188,6 +190,7 @@ public sealed class PostgresConsignmentService : IConsignmentService
             AdvancePaid = row.AdvancePaid,
             CollectionCharge = row.CollectionCharge,
             PaymentBasis = row.PaymentBasis,
+            PaymentAt = row.PaymentAt,
             InvoiceNo = row.InvoiceNo,
             InvoiceDate = row.InvoiceDate,
             FreightAmount = row.FreightAmount,

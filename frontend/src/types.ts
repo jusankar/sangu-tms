@@ -37,6 +37,7 @@ export type Consignment = {
   advancePaid: number
   collectionCharge: number
   paymentBasis?: string
+  paymentAt?: string
   invoiceNo?: string
   invoiceDate?: string
   freightAmount: number
@@ -74,6 +75,7 @@ export type ConsignmentUpsert = {
   advancePaid: number
   collectionCharge: number
   paymentBasis?: string
+  paymentAt?: string
   invoiceNo?: string
   invoiceDate?: string
   freightAmount: number
@@ -291,5 +293,28 @@ export type ChatAskResponse = {
   success: boolean
   intent: string
   data?: Record<string, unknown>
+}
+
+export type VehicleTrackingPoint = {
+  latitude: number
+  longitude: number
+  label: string
+}
+
+export type VehicleTrackingData = {
+  vehicleNumber: string
+  challanNo: string
+  gpsProvider: string
+  deviceId: string
+  status: string
+  lastPingAtUtc: string
+  speedKmph: number
+  fromLocation: string
+  toLocation: string
+  isGpsAvailable: boolean
+  gpsMessage: string
+  routeMessage: string
+  route: VehicleTrackingPoint[]
+  currentPosition: VehicleTrackingPoint
 }
 
