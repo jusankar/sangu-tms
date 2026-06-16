@@ -158,6 +158,7 @@ public sealed class SanguTmsDbContext : DbContext
             entity.Property(x => x.WeightKg).HasColumnName("weight_kg");
             entity.Property(x => x.Description).HasColumnName("description");
             entity.Property(x => x.FreightAmount).HasColumnName("freight_amount");
+            entity.HasOne<ChallanRecord>().WithMany().HasForeignKey(x => x.ChallanId);
         });
 
         modelBuilder.Entity<LorryPaymentRecord>(entity =>
@@ -174,6 +175,7 @@ public sealed class SanguTmsDbContext : DbContext
             entity.Property(x => x.Notes).HasColumnName("notes");
             entity.Property(x => x.CreatedAt).HasColumnName("created_at");
             entity.Property(x => x.CreatedBy).HasColumnName("created_by");
+            entity.HasOne<ChallanRecord>().WithMany().HasForeignKey(x => x.ChallanId);
         });
 
         modelBuilder.Entity<InvoiceRecord>(entity =>
@@ -203,6 +205,8 @@ public sealed class SanguTmsDbContext : DbContext
             entity.HasKey(x => new { x.InvoiceId, x.ChallanId });
             entity.Property(x => x.InvoiceId).HasColumnName("invoice_id");
             entity.Property(x => x.ChallanId).HasColumnName("challan_id");
+            entity.HasOne<InvoiceRecord>().WithMany().HasForeignKey(x => x.InvoiceId);
+            entity.HasOne<ChallanRecord>().WithMany().HasForeignKey(x => x.ChallanId);
         });
 
         modelBuilder.Entity<MoneyReceiptRecord>(entity =>
@@ -220,6 +224,7 @@ public sealed class SanguTmsDbContext : DbContext
             entity.Property(x => x.Status).HasColumnName("status");
             entity.Property(x => x.CreatedAt).HasColumnName("created_at");
             entity.Property(x => x.CreatedBy).HasColumnName("created_by");
+            entity.HasOne<InvoiceRecord>().WithMany().HasForeignKey(x => x.InvoiceId);
         });
 
         modelBuilder.Entity<DriverRecord>(entity =>

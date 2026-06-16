@@ -300,7 +300,7 @@ export const api = {
   vehicleTracking: (vehicleNumber: string) =>
     request<VehicleTrackingData>(`/api/traffic/vehicle-tracking/${encodeURIComponent(vehicleNumber)}`),
   chatAsk: (message: string) =>
-    requestChat<ChatAskResponse>("/api/chat/ask", {
+    request<ChatAskResponse>("/api/chat/ask", {
       method: "POST",
       body: JSON.stringify({ message }),
     }),
