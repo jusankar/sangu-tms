@@ -113,7 +113,7 @@ public sealed class VehicleTrackingController : ControllerBase
 
         var hasGps = gps is not null;
         var current = gps is not null
-            ? new TrackingPointViewModel(gps.Value.Latitude, gps.Value.Longitude, "Current Position")
+            ? new TrackingPointViewModel(gps.Latitude, gps.Longitude, "Current Position")
             : EstimateCurrent(route.Route);
 
         var now = DateTimeOffset.UtcNow;

@@ -120,9 +120,13 @@ public sealed class PostgresChallanService : IChallanService
             FreightAmount = Math.Max(0, x.FreightAmount)
         }).ToList();
 
+        await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
         _db.Challans.Add(challan);
+        await _db.SaveChangesAsync(cancellationToken);
+
         _db.ChallanConsignments.AddRange(lineItems);
         await _db.SaveChangesAsync(cancellationToken);
+        await tx.CommitAsync(cancellationToken);
 
         var groups = new Dictionary<Guid, List<ChallanConsignmentRecord>> { [challan.Id] = lineItems };
         return Map(challan, groups);

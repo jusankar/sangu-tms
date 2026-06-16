@@ -2,12 +2,14 @@
 
 Initial project scaffolding, schema, and API contracts for Phase 1.
 
-## Current contents
-- `db/platform/schema_v1.sql` - license/subscription metadata DB
-- `db/tenant/schema_v1.sql` - operational per-tenant DB
-- `contracts/openapi/phase1.yaml` - Phase 1 API contract
-- `docs/` - model freeze, tenancy/auth skeleton, implementation checklist
-- `src/` - manual .NET clean architecture skeleton
+## Project structure
+- `src/` — .NET 8 clean architecture (Api, Application, Domain, Infrastructure + microservices)
+- `frontend/` — React + TypeScript + Vite frontend
+- `db/` — SQL schemas (platform DB and per-tenant DB with patch history)
+- `contracts/openapi/` — Phase 1 API contract
+- `services/traffic_packing/` — Python FastAPI service for 3D bin-packing
+- `docs/` — Architecture, data model, auth/RBAC design, implementation checklist, PRD
+- `scripts/` — Dev helper scripts
 
 ## Prerequisites
 - .NET SDK 8.x
@@ -30,20 +32,16 @@ If you want to manage schema changes with EF Core:
 
 Note: The repo already includes `db/tenant/schema_v1.sql` for manual setup; choose one workflow.
 
-## Next action after SDK install
-1. Create solution file and add projects:
-   - `dotnet new sln -n Sangu.Tms`
-   - `dotnet sln add src/Sangu.Tms.Api/Sangu.Tms.Api.csproj`
-   - `dotnet sln add src/Sangu.Tms.Application/Sangu.Tms.Application.csproj`
-   - `dotnet sln add src/Sangu.Tms.Domain/Sangu.Tms.Domain.csproj`
-   - `dotnet sln add src/Sangu.Tms.Infrastructure/Sangu.Tms.Infrastructure.csproj`
-2. Restore and build:
+## Build and run (.NET)
+1. Restore and build:
    - `dotnet restore`
    - `dotnet build`
+2. Run the API:
+   - `dotnet run --project src/Sangu.Tms.Api`
 
 ## Environment note for this workspace
 - This environment blocks access to `C:\Users\Admin\AppData\Roaming\NuGet`.
-- Use [scripts/dev-dotnet.ps1](c:\Projects\sangu2\scripts\dev-dotnet.ps1) to run restore/build with local workspace paths.
+- Use [scripts/dev-dotnet.ps1](scripts/dev-dotnet.ps1) to run restore/build with local workspace paths.
 
 ## Working API slice
 - `POST /api/auth/login`

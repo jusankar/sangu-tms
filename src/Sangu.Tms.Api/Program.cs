@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Sangu.Tms.Api.Authentication;
 using Sangu.Tms.Api.Authorization;
+using Sangu.Tms.Api.Chat;
 using Sangu.Tms.Api.Middleware;
 using Sangu.Tms.Application.Interfaces;
 using Sangu.Tms.Infrastructure.Data;
 using Sangu.Tms.Infrastructure.Services;
 
+DotEnvLoader.LoadIfPresent();
 var builder = WebApplication.CreateBuilder(args);
 var corsPolicy = "frontend-dev";
 
@@ -103,6 +105,9 @@ builder.Services.AddScoped<IVehicleService, PostgresVehicleService>();
 builder.Services.AddSingleton<IRbacService, InMemoryRbacService>();
 builder.Services.AddScoped<ILicenseService, PostgresLicenseService>();
 builder.Services.AddSingleton<IAuthService, InMemoryAuthService>();
+builder.Services.AddHttpClient<OpenAiSqlGenerator>();
+builder.Services.AddScoped<ReadOnlySqlRunner>();
+builder.Services.AddScoped<ChatQueryAgent>();
 
 var app = builder.Build();
 
@@ -158,7 +163,50 @@ app.MapGet("/api/info", () => Results.Ok(new
 }));
 app.MapControllers();
 
+app.MapPost("/api/chat/ask", async (ChatRequest request, ChatQueryAgent agent, CancellationToken ct) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Message))
+        return Results.BadRequest(new ChatResponse("Please type a question.", false, "invalid_input"));
+    var response = await agent.AnswerAsync(request.Message, ct);
+    return Results.Ok(response);
+}).RequireAuthorization();
+
 app.Run();
+
+public sealed record ChatRequest(string Message);
+
+public static class DotEnvLoader
+{
+    public static void LoadIfPresent()
+    {
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        while (dir is not null)
+        {
+            var candidate = Path.Combine(dir.FullName, ".env");
+            if (File.Exists(candidate))
+            {
+                LoadFile(candidate);
+                return;
+            }
+            dir = dir.Parent;
+        }
+    }
+
+    private static void LoadFile(string path)
+    {
+        foreach (var rawLine in File.ReadAllLines(path))
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#')) continue;
+            var sep = line.IndexOf('=');
+            if (sep <= 0) continue;
+            var key = line[..sep].Trim();
+            var value = line[(sep + 1)..].Trim();
+            if (!string.IsNullOrWhiteSpace(key) && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
+                Environment.SetEnvironmentVariable(key, value);
+        }
+    }
+}
 
 
 
