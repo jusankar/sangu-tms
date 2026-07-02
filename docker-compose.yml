@@ -7,6 +7,7 @@ services:
       - "5000:5000"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__TenantDb: "Host=postgres;Port=5432;Database=sangu2;Username=postgres;Password=postgres"
 
   web:
     build:

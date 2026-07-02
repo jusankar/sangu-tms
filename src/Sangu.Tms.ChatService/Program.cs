@@ -7,15 +7,22 @@ DotEnvLoader.LoadIfPresent();
 
 var builder = WebApplication.CreateBuilder(args);
 var corsPolicy = "frontend-dev";
-var chatServiceUrl = builder.Configuration["ChatService:Url"] ?? "http://127.0.0.1:5006";
+var chatServiceUrl = builder.Configuration["ChatService:Url"];
 
-builder.WebHost.UseUrls(chatServiceUrl);
+if (!string.IsNullOrWhiteSpace(chatServiceUrl))
+{
+    builder.WebHost.UseUrls(chatServiceUrl);
+}
+else if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
+{
+    builder.WebHost.UseUrls("http://127.0.0.1:5006");
+}
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(corsPolicy, policy =>
         policy
-            .WithOrigins("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174")
+            .WithOrigins("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:8080", "http://127.0.0.1:8080")
             .AllowAnyHeader()
             .AllowAnyMethod());
 });

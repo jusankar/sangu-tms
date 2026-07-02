@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: sangu2
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/platform/schema_v1.sql:/docker-entrypoint-initdb.d/00_platform_schema.sql
+      - ./db/tenant/schema_v1.sql:/docker-entrypoint-initdb.d/01_tenant_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   booking-service:
     build:
       context: .
@@ -58,3 +76,12 @@ services:
         SERVICE_DLL: Sangu.Tms.ChatService.dll
     ports:
       - "5006:5000"
+    environment:
+      ConnectionStrings__TenantDb: "Host=postgres;Port=5432;Database=sangu2;Username=postgres;Password=postgres"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
